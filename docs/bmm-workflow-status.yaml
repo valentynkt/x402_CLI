@@ -1,0 +1,51 @@
+# Workflow Status Template
+# This tracks progress through BMM methodology phases
+# Phase 3/4 (Implementation) is tracked separately in sprint-status.yaml
+
+# generated: 2025-11-05
+# project: x402-dev
+# project_type: {{project_type}}
+# selected_track: {{selected_track}}
+# field_type: {{field_type}}
+# workflow_path: {{workflow_path_file}}
+
+# STATUS DEFINITIONS:
+# ==================
+# Initial Status (before completion):
+#   - required: Must be completed to progress
+#   - optional: Can be completed but not required
+#   - recommended: Strongly suggested but not required
+#   - conditional: Required only if certain conditions met (e.g., if_has_ui)
+#
+# Completion Status:
+#   - {file-path}: File created/found (e.g., "docs/product-brief.md")
+#   - skipped: Optional/conditional workflow that was skipped
+
+generated: "2025-11-05"
+project: "x402-dev"
+project_type: "software"
+selected_track: "method"
+field_type: "greenfield"
+workflow_path: "bmad/bmm/workflows/workflow-status/paths/method-greenfield.yaml"
+brainstorm_requested: true
+research_requested: true
+product_brief_requested: true
+
+workflow_status:
+  # Phase 0: Discovery (Optional - based on your choices)
+  brainstorm-project: docs/brainstorming-hybrid-variations-2025-11-04.md
+  research: skipped
+  product-brief: docs/product-brief-x402-dev-2025-11-05.md
+
+  # Phase 1: Planning
+  prd: docs/PRD.md
+  validate-prd: optional
+  create-ux-design: skipped
+
+  # Phase 2: Solutioning
+  architecture: docs/architecture.md
+  validate-architecture: optional
+  solutioning-gate-check: docs/implementation-readiness-report-2025-11-09.md
+
+  # Phase 3: Implementation
+  sprint-planning: docs/sprint-status.yaml
