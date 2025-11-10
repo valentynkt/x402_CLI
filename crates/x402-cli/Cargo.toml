@@ -9,3 +9,6 @@ path = "src/main.rs"
 
 [dependencies]
 x402-core = { path = "../x402-core" }
+clap = { workspace = true }
+tokio = { workspace = true }
+anyhow = { workspace = true }

@@ -61,7 +61,7 @@ x402-dev delivers the complete x402 Protocol Standard Toolkit through 7 value-fo
 
 **Epic 6 Demo Checkpoint:** "Working in 2 minutes"
 - Screencast: `x402-dev examples init mcp-server-starter` → working MCP server
-- Include: Corbits-specific example for partnership ($5k bonus)
+- Include: x402 protocol examples using pure Rust implementation
 
 ### Sequencing Strategy
 
@@ -108,8 +108,8 @@ Epic 1 (Foundation) [BLOCKS ALL]
 - ❌ **RISK:** Epic 1 delay cascades entire timeline
   - **Mitigation:** Hardcode defaults, "Hello World" CLI in 4 hours max
 
-- ❌ **RISK:** Corbits SDK integration fails (6 hours wasted)
-  - **Mitigation:** 2-hour time box, fallback to manual HTTP/invoice generation
+- ✅ **RESOLVED:** Corbits SDK integration complexity (was 6+ hours)
+  - **Solution:** Pure Rust manual protocol implementation (<2 hours)
 
 - ❌ **RISK:** Policy engine too complex (Days 4-5 slip)
   - **Mitigation:** Start with allowlist only, add rate limiting if time permits
@@ -117,8 +117,8 @@ Epic 1 (Foundation) [BLOCKS ALL]
 - ❌ **RISK:** No beta users respond (Demo lacks social proof)
   - **Mitigation:** START Discord/x402 community outreach TODAY (Day 1), not Day 5
 
-- ❌ **RISK:** Mock server underestimated (Day 2-3 slip)
-  - **Mitigation:** Use simplest Express.js implementation, defer advanced features
+- ✅ **RESOLVED:** Mock server complexity (was Day 2-3 slip risk)
+  - **Solution:** Use actix-web (Rust) - simpler than Express.js integration
 
 **HARD DEADLINES:**
 - End of Day 1: "Hello World" CLI command working
@@ -137,42 +137,44 @@ Epic 1 (Foundation) [BLOCKS ALL]
 
 ## Epic 1: Foundation & CLI Infrastructure
 
-**Epic Goal:** Establish the technical foundation that enables all subsequent development. Developers can install x402-dev via npm and run their first command (`x402-dev version`) within 5 minutes, with clear error messages and helpful documentation.
+**Epic Goal:** Establish the technical foundation that enables all subsequent development. Developers can install x402-dev and run their first command (`x402-dev version`) within 5 minutes, with clear error messages and helpful documentation.
 
 **Value Statement:** "Install and run first command in <5 minutes"
 
 **Timeline:** Day 1 (Nov 5-6)
 **Hard Deadline:** End of Day 1 - "Hello World" CLI command working
 
+**Stories: 1.1 - 1.7** (Story 1.8 CANCELLED - pure Rust approach, no TypeScript runtime needed)
+
 ---
 
 ### Story 1.1: Project Scaffolding & Build System
 
 As a developer,
-I want a TypeScript project with proper build tooling,
+I want a Rust workspace with proper build tooling,
 So that I can develop and package x402-dev efficiently.
 
 **Acceptance Criteria:**
 
 **Given** a new project directory
-**When** I run the build command
-**Then** TypeScript compiles to JavaScript without errors
+**When** I run `cargo build --release`
+**Then** the Rust code compiles without errors
 
-**And** the output includes both ESM and CJS formats
+**And** the binary is created in `target/release/x402-dev`
 
-**And** the package.json includes correct bin entry for CLI executable
+**And** the release binary is optimized for size (<3MB)
 
-**And** npm pack produces a bundle <10MB
+**And** Cargo.toml includes correct workspace structure
 
 **Prerequisites:** None (first story in project)
 
 **Technical Notes:**
-- Use tsup for zero-config bundling
-- TypeScript 5.x with strict mode enabled
-- Target ES2022 for modern features
-- Include .gitignore, .npmignore for clean package
-- Set up package.json with: name, version, bin, engines (Node 18+)
-- Dependencies: typescript, tsup, @types/node
+- Create Cargo workspace with 2-3 crates (x402-cli, x402-core, optional xtask)
+- Set up workspace dependencies in root Cargo.toml
+- Configure release profile for size optimization (opt-level="z", lto="fat", strip="symbols")
+- Include .gitignore with Rust/cargo patterns
+- Set up Cargo.toml metadata: name, version, authors, edition=2021
+- No external dependencies yet (add in subsequent stories)
 
 ---
 
@@ -233,7 +235,7 @@ So that I know which version I'm running and if updates are available.
 **When** I run `x402-dev version`
 **Then** it displays x402-dev version, Rust version, and platform
 
-**And** it checks npm registry for newer versions (weekly)
+**And** it checks crates.io for newer versions (weekly)
 
 **And** it displays "Update available" message if newer version exists
 
@@ -246,8 +248,8 @@ So that I know which version I'm running and if updates are available.
 - Use std::env::consts::ARCH and std::env::consts::OS for platform detection
 - Display Rust version using rustc_version crate or compile-time CARGO_PKG_RUST_VERSION
 - Implement weekly update check (cache last check timestamp)
-- npm registry API: `https://registry.npmjs.org/x402-dev/latest`
-- Use reqwest crate for HTTP requests to npm registry
+- crates.io API: `https://crates.io/api/v1/crates/x402-dev`
+- Use reqwest crate for HTTP requests to crates.io API
 - Store timestamp in ~/.x402dev/update-check.json using serde_json
 - Use directories crate to get platform-specific config directory
 - Graceful fallback if network unavailable (use Result<> pattern)
@@ -442,114 +444,22 @@ So that I can quickly set up x402-dev configuration.
 
 ### Story 1.8: TypeScript Runtime Integration
 
-As a developer,
-I want deno_core V8 runtime integrated with TypeScript bundling,
-So that Epic 2 (Mock Server) and Epic 5 (Policy Engine) can use TypeScript/Corbits SDK.
+**STATUS: CANCELLED - YAGNI**
 
-**Acceptance Criteria:**
+**Cancellation Reason:**
+- No $5k Corbits prize exists (false premise in original architecture)
+- Pure Rust implementation is simpler, faster, and smaller binary
+- actix-web (Rust) > Express.js (TypeScript) for HTTP server
+- deno_core adds 8+ hours complexity for zero benefit
+- Binary size reduction: 8-15MB → 2-3MB (80% smaller)
 
-**Given** the Rust workspace is scaffolded
-**When** I build the project
-**Then** TypeScript code is automatically compiled and bundled
+**Alternative Approach (Implemented in Epic 2):**
+- Use actix-web for mock HTTP server (pure Rust)
+- Manual x402 protocol implementation (simple invoice generation)
+- No external SDK dependencies required
+- Implementation time: 2-3 hours vs 8+ hours with deno_core
 
-**And** the bundled JavaScript is embedded into the Rust binary
-
-**And** deno_core JsRuntime initializes successfully
-
-**And** Rust can call TypeScript functions via deno_core ops
-
-**And** the build process completes in <30 seconds
-
-**Prerequisites:** Story 1.1 (project scaffolding must exist)
-
-**Technical Notes:**
-- Create TypeScript project structure in `ts/` directory:
-  ```
-  ts/
-  ├── package.json
-  ├── tsconfig.json
-  ├── src/
-  │   ├── runtime.ts (entry point)
-  │   ├── corbits/ (Corbits SDK wrapper - placeholder for Epic 2)
-  │   ├── server/ (Express server - placeholder for Epic 2)
-  │   └── utils/
-  └── dist/ (build output)
-  ```
-- Set up TypeScript dependencies in `ts/package.json`:
-  ```json
-  {
-    "name": "x402-dev-runtime",
-    "scripts": {
-      "build": "tsup src/runtime.ts --format esm --minify"
-    },
-    "devDependencies": {
-      "typescript": "^5.3",
-      "tsup": "^8.0",
-      "@types/node": "^20.0"
-    }
-  }
-  ```
-- Configure `ts/tsconfig.json`:
-  ```json
-  {
-    "compilerOptions": {
-      "target": "ES2022",
-      "module": "ESNext",
-      "moduleResolution": "bundler",
-      "strict": true
-    }
-  }
-  ```
-- Add deno_core to `crates/x402-core/Cargo.toml`:
-  ```toml
-  [dependencies]
-  deno_core = "0.311"
-  ```
-- Create `crates/x402-core/build.rs` to bundle TypeScript at build time:
-  ```rust
-  use std::process::Command;
-
-  fn main() {
-      println!("cargo:rerun-if-changed=../../ts/src");
-
-      // Run npm build
-      let status = Command::new("npm")
-          .args(&["run", "build"])
-          .current_dir("../../ts")
-          .status()
-          .expect("Failed to build TypeScript");
-
-      assert!(status.success(), "TypeScript build failed");
-  }
-  ```
-- Create `crates/x402-core/src/runtime/js_runtime.rs` to initialize deno_core:
-  ```rust
-  use deno_core::{JsRuntime, RuntimeOptions};
-
-  pub struct JavaScriptRuntime {
-      runtime: JsRuntime,
-  }
-
-  impl JavaScriptRuntime {
-      pub fn new() -> Result<Self, anyhow::Error> {
-          // Embed bundled JavaScript
-          let js_code = include_str!("../../../ts/dist/runtime.js");
-
-          let mut runtime = JsRuntime::new(RuntimeOptions {
-              extensions: vec![],
-              ..Default::default()
-          });
-
-          // Execute bundled code
-          runtime.execute_script("<runtime>", js_code)?;
-
-          Ok(Self { runtime })
-      }
-  }
-  ```
-- Add `mod runtime;` to `crates/x402-core/src/lib.rs`
-- Test integration with simple TypeScript function call
-- Estimated effort: 4-6 hours (includes TypeScript setup + deno_core integration + testing)
+**Reference:** See KISS refactoring analysis (docs/KISS-refactoring-plan.md)
 
 ---
 

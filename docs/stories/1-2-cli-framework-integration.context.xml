@@ -1,0 +1,214 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>1</epicId>
+    <storyId>2</storyId>
+    <title>CLI Framework Integration</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-10</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/1-2-cli-framework-integration.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a developer</asA>
+    <iWant>Clap integrated as the CLI framework</iWant>
+    <soThat>I can define commands with options and help text</soThat>
+    <tasks>
+      - Task 1: Add Clap dependencies and configure features (AC: #1, #2, #3)
+        - Add clap = { version = "4.5", features = ["derive", "color", "suggestions"] } to workspace dependencies in root Cargo.toml
+        - Add clap to crates/x402-cli/Cargo.toml dependencies (inheriting from workspace)
+        - Verify clap features include derive, color, and suggestions
+
+      - Task 2: Create CLI module structure with Clap derive API (AC: #1)
+        - Create crates/x402-cli/src/cli.rs file
+        - Define main Cli struct with #[derive(Parser)] macro
+        - Add #[command(name = "x402-dev", about = "x402 Protocol Standard Toolkit")] attributes
+        - Create Commands enum with #[derive(Subcommand)] for command routing
+        - Add command: Commands field to Cli struct with #[command(subcommand)] attribute
+        - Add mod cli; declaration to crates/x402-cli/src/main.rs
+
+      - Task 3: Define initial command placeholders (AC: #1)
+        - Add placeholder commands to Commands enum: Mock, Test, Verify, Check, Monitor, Policy, Examples, Doctor, Init, Version
+        - Create placeholder argument structs for each command (e.g., MockArgs, TestArgs)
+        - Use #[derive(Args)] for argument structs
+        - Add basic about attributes to each command variant
+
+      - Task 4: Integrate Clap parsing in main.rs (AC: #1, #2, #3)
+        - Import clap::Parser and cli::Cli in main.rs
+        - Replace placeholder main function with Cli::parse() call
+        - Add match statement to route commands to placeholder handlers
+        - For now, each command should print placeholder message: "Command [name] not yet implemented - coming in Epic X"
+        - Ensure binary compiles and runs without errors
+
+      - Task 5: Test help text and command suggestions (AC: #1, #2, #3)
+        - Run cargo build --release to compile updated CLI
+        - Test ./target/release/x402-dev --help displays command list
+        - Verify help text includes command descriptions and shows colored output
+        - Test invalid command: ./target/release/x402-dev mok suggests "mock"
+        - Test ./target/release/x402-dev mock --help shows mock command help (even though unimplemented)
+        - Verify suggestions feature works for misspelled commands
+
+      - Task 6: Update package.json and README (AC: #1)
+        - Update package.json description if needed to reflect CLI tool nature
+        - Add brief usage section to README.md showing x402-dev --help example
+        - Document available commands (even if placeholders) for early testers
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    1. Given the CLI is invoked with x402-dev --help, When the command runs, Then it displays a list of available commands
+    2. And the help text is formatted with colors (via Clap's built-in styling)
+    3. And invalid commands show "did you mean?" suggestions
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epic Breakdown</title>
+        <section>Story 1.2: CLI Framework Integration (lines 179-221)</section>
+        <snippet>Story requirements specify integrating Clap 4.5 with derive macros, color output, and command suggestions. Clap automatically provides help formatting and "did you mean?" suggestions when features are enabled.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document</title>
+        <section>Technology Stack Details - CLI Framework (lines 76-82)</section>
+        <snippet>Clap 4.5 with features ["derive", "env", "wrap_help"] specified as industry-standard Rust CLI framework. Derive macros chosen over builder API for cleaner, more maintainable code.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document</title>
+        <section>Complete Project Structure (lines 150-223)</section>
+        <snippet>Project uses 3-crate workspace structure: x402-cli (binary), x402-core (library), xtask (automation). CLI commands defined in crates/x402-cli/src/commands/ directory for Epics 1-6.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document</title>
+        <section>Naming Conventions (lines 336-345)</section>
+        <snippet>Rust modules use snake_case (mod mock_server), types use PascalCase (struct MockServerConfig), functions use snake_case (fn create_invoice), constants use SCREAMING_SNAKE_CASE.</snippet>
+      </doc>
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>CLI Tool Specific Requirements (lines 479-538)</section>
+        <snippet>x402-dev is first comprehensive CLI toolkit for x402 protocol. Must provide built-in help system (FR-8.1), composable output for piping, and multi-tier configuration with CLI flags as highest priority.</snippet>
+      </doc>
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>Technology Stack - CLI Framework (lines 710-711)</section>
+        <snippet>Clap 4.5 chosen as industry-standard Rust CLI framework with derive macros. Decision rationale: Clap over structopt due to better derive macros and active development.</snippet>
+      </doc>
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>Performance Requirements (lines 1400-1403)</section>
+        <snippet>CLI must cold-start in under 500ms for first command, warm-start in under 100ms for subsequent commands. CLI responsiveness critical for developer experience. Memory usage must stay under 100MB.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>Cargo.toml</path>
+        <kind>workspace_manifest</kind>
+        <symbol>workspace</symbol>
+        <lines>1-18</lines>
+        <reason>Workspace manifest where Clap dependency must be added to [workspace.dependencies] section (currently empty placeholder at line 10)</reason>
+      </artifact>
+      <artifact>
+        <path>crates/x402-cli/Cargo.toml</path>
+        <kind>binary_crate_manifest</kind>
+        <symbol>x402-cli package</symbol>
+        <lines>1-12</lines>
+        <reason>Binary crate manifest where Clap dependency must be added (inheriting from workspace). Currently only depends on x402-core. Binary name is "x402-dev" per line 7.</reason>
+      </artifact>
+      <artifact>
+        <path>crates/x402-cli/src/main.rs</path>
+        <kind>binary_entry_point</kind>
+        <symbol>main function</symbol>
+        <lines>1-4</lines>
+        <reason>Current main.rs is placeholder that prints version. Must be replaced with Clap CLI parsing logic. This is the entry point for all CLI commands.</reason>
+      </artifact>
+      <artifact>
+        <path>crates/x402-core/src/lib.rs</path>
+        <kind>library_root</kind>
+        <symbol>x402_core library</symbol>
+        <lines>N/A</lines>
+        <reason>Core library crate that CLI depends on. No changes needed for this story but provides context for project structure.</reason>
+      </artifact>
+      <artifact>
+        <path>package.json</path>
+        <kind>npm_manifest</kind>
+        <symbol>x402-dev package</symbol>
+        <lines>1-40</lines>
+        <reason>NPM distribution manifest with bin entry pointing to Rust binary (line 21). May need description update per Task 6. Already includes "cli" keyword (line 10).</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <rust>
+        <workspace>
+          <!-- Currently empty, Clap will be added -->
+        </workspace>
+        <x402-cli>
+          <dep name="x402-core" version="path dependency" />
+        </x402-cli>
+      </rust>
+      <npm>
+        <!-- None for this story - TypeScript runtime not affected -->
+      </npm>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    - Use Clap derive macros (#[derive(Parser)], #[derive(Subcommand)], #[derive(Args)]) instead of builder API per ADR-002
+    - Add Clap to workspace dependencies section in root Cargo.toml with features: ["derive", "color", "suggestions", "env", "wrap_help"]
+    - All 10 commands must be placeholder structs: Mock, Test, Verify, Check, Monitor, Policy, Examples, Doctor, Init, Version
+    - Commands defined in single Commands enum for centralized routing
+    - Clap handles parse errors automatically - no custom error handling needed yet (Story 1.5)
+    - Maintain workspace structure from Story 1.1 (3-crate pattern)
+    - Binary size impact acceptable: Clap adds ~500KB to binary (within 8-15MB target)
+    - No changes to TypeScript bundling or build.rs from Story 1.1
+    - Release profile optimization settings remain unchanged (opt-level="z", lto="fat")
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>Clap Parser trait</name>
+      <kind>derive_macro_trait</kind>
+      <signature>#[derive(Parser)] struct Cli { #[command(subcommand)] command: Commands }</signature>
+      <path>External: clap crate</path>
+    </interface>
+    <interface>
+      <name>Clap Subcommand trait</name>
+      <kind>derive_macro_trait</kind>
+      <signature>#[derive(Subcommand)] enum Commands { Mock(MockArgs), Test(TestArgs), ... }</signature>
+      <path>External: clap crate</path>
+    </interface>
+    <interface>
+      <name>Clap Args trait</name>
+      <kind>derive_macro_trait</kind>
+      <signature>#[derive(Args)] struct MockArgs { /* fields added in Epic 2 */ }</signature>
+      <path>External: clap crate</path>
+    </interface>
+    <interface>
+      <name>Cli::parse() method</name>
+      <kind>function_signature</kind>
+      <signature>impl Cli { pub fn parse() -> Self }</signature>
+      <path>Provided by Clap Parser derive macro</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>Manual CLI testing for Clap integration. Run commands and verify help output formatting, color support, and suggestion accuracy. Build verification ensures cargo build --release succeeds. No unit tests required - Clap framework provides tested functionality. Visual verification checks terminal output for proper color rendering and formatting.</standards>
+    <locations>Manual testing via terminal commands. No test files for this story.</locations>
+    <ideas>
+      AC #1: Test x402-dev --help displays command list with descriptions
+      AC #1: Test x402-dev mock --help shows individual command help
+      AC #2: Verify help text renders with colors in terminal (Clap built-in)
+      AC #3: Test typo suggestions: x402-dev mok should suggest "mock"
+      AC #3: Test typo suggestions: x402-dev tst should suggest "test"
+      Build: Verify cargo build --release completes without errors
+      Binary: Verify ./target/release/x402-dev executes without crash
+      Size: Check binary size increase is acceptable (expect ~500KB from Clap)
+    </ideas>
+  </tests>
+</story-context>

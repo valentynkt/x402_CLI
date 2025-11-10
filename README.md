@@ -46,12 +46,50 @@ cargo build --release
 ## Usage
 
 ```bash
+# Display help and available commands
+x402-dev --help
+
+# Get help for a specific command
+x402-dev <command> --help
+
 # Display version
 x402-dev --version
-
-# Get help
-x402-dev --help
 ```
+
+### Available Commands
+
+The following commands are available (implementations coming in future epics):
+
+| Command | Description | Status |
+|---------|-------------|--------|
+| `mock` | Start mock facilitator server | Epic 2 |
+| `test` | Run automated test suites | Epic 3 |
+| `verify` | Verify x402 protocol compliance | Epic 3 |
+| `check` | Check configuration and system health | Epic 4 |
+| `monitor` | Monitor x402 transactions and performance | Epic 5 |
+| `policy` | Manage payment policies and rules | Epic 5 |
+| `examples` | Show example implementations and usage | Epic 6 |
+| `doctor` | Diagnose issues and validate setup | Epic 4 |
+| `init` | Initialize a new x402 project | Epic 6 |
+| `version` | Display version and update information | Story 1.3 |
+
+Example usage:
+
+```bash
+# Get help for the mock server command
+x402-dev mock --help
+
+# Start the mock facilitator server (Epic 2)
+x402-dev mock --port 8080
+
+# Run automated tests (Epic 3)
+x402-dev test --suite integration
+
+# Verify protocol compliance (Epic 3)
+x402-dev verify --endpoint http://localhost:8080
+```
+
+**Note**: Most commands are placeholders and will be fully implemented in their respective epics.
 
 ## Project Structure
 

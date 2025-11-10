@@ -7,7 +7,14 @@ members = [
 ]
 
 [workspace.dependencies]
-# Workspace dependencies will be added in future stories
+# CLI framework
+clap = { version = "4.5", features = ["derive", "color", "suggestions", "env", "wrap_help"] }
+
+# Error handling
+anyhow = "1.0"
+
+# Async runtime (ADR-002: multi-thread runtime, no V8 constraints)
+tokio = { version = "1.48", features = ["rt-multi-thread", "macros"] }
 
 [profile.release]
 opt-level = "z"       # Optimize for size

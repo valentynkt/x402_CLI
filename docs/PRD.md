@@ -50,8 +50,8 @@ x402-dev positions itself as **essential ecosystem infrastructure**, not a vendo
 - **Developer-facing tool:** Not end-user application
 - **Multi-feature toolkit:** Three integrated feature sets (Testing, Validation, Security)
 - **Ecosystem infrastructure:** Public goods positioning (developer productivity)
-- **Hybrid Rust + TypeScript:** Rust core with embedded V8 runtime for Corbits SDK integration
-- **Cross-platform:** macOS, Linux, Windows support via Rust (single binary distribution)
+- **Pure Rust Implementation:** Single-language codebase with actix-web HTTP server (KISS principle)
+- **Cross-platform:** macOS, Linux, Windows support via Rust (single binary distribution ~2-3MB)
 
 ---
 
@@ -149,7 +149,6 @@ For complete protocol specification see:
 
 **Secondary Opportunities:**
 - Track 2: Best x402 API Integration ($10k) - if dogfooding demo impresses
-- Bonus: Corbits Project ($5k) - if built on Corbits/Faremeter SDK
 - **Realistic prize range: $10-20k**
 
 ### Developer Adoption Success (Post-Hackathon)
@@ -568,10 +567,9 @@ npx x402-dev <command>
 ```
 
 **Requirements:**
-- **Runtime:** No dependencies (self-contained Rust binary with embedded V8)
-- **Development builds only:** Node.js 18+ for TypeScript bundling (optional for end users)
+- **Runtime:** No dependencies (self-contained Rust binary)
 - Cross-platform: macOS, Linux, Windows
-- Binary size: 3-5MB (including embedded JavaScript runtime)
+- Binary size: 2-3MB (pure Rust, no embedded runtime)
 
 **Setup Time:**
 - <5 minutes from `npm install` to first command
@@ -702,71 +700,66 @@ jobs:
 ### Core Dependencies
 
 **Language & Runtime:**
-- **Rust 1.75+** - Core language (performance, type safety, small binary)
-- **TypeScript 5.x** - For Corbits SDK integration (compiled to JavaScript, embedded via deno_core)
-- **deno_core 0.311** - Embedded V8 runtime for seamless npm package integration
-- **Node.js 18+** - Development builds only (TypeScript bundling via tsup/esbuild)
+- **Rust 1.75+** - Core language (performance, type safety, small binary ~2-3MB)
 
 **CLI Framework:**
 - **Clap 4.5** - Industry-standard Rust CLI framework (derive macros)
   - Subcommands, options parsing, help generation
   - Auto-generated help text with examples
   - Built-in "did you mean?" suggestions and color output
-- **miette 7.0** - Beautiful error diagnostics with code snippets
-- **console/indicatif** - Terminal colors and progress indicators
+- **anyhow 1.0** - Ergonomic error handling with context
+
+**HTTP Server:**
+- **actix-web 4.9** - Pure Rust HTTP server framework
+  - Native async/await patterns with tokio
+  - Middleware architecture for policy enforcement
+  - Mature, battle-tested framework
 
 **Configuration & Data:**
-- **serde_yaml 0.9** - YAML parser for test suites and policy files (Rust)
-- **config 0.14** - Multi-tier configuration management (Rust)
-- **serde/serde_json** - Serialization for config and JSON data (Rust)
-- **cosmiconfig pattern** - Implemented in Rust for multi-tier config discovery
+- **serde_yaml 0.9** - YAML parser for test suites and policy files
+- **serde/serde_json** - Serialization for config and JSON data
+- **directories** - Platform-specific config directory discovery
 
 ### x402 Integration
 
-**Primary Option: Corbits/Faremeter SDK**
-- **Package:** `@corbits/faremeter` (open-source, LGPL-3.0)
+**Implementation Approach: Pure Rust**
+- **Invoice Generation:** Manual x402 protocol implementation
+  - HTTP 402 status code
+  - WWW-Authenticate header formatting
+  - JSON invoice structure (recipient, amount, currency, memo)
 - **Advantages:**
-  - Solana-first design (matches hackathon platform)
-  - Open-source license aligns with public goods positioning
-  - Qualifies for $5,000 Corbits Project bonus prize
-  - Active maintenance (updated October 2024)
-  - Strong community support
+  - Simple, predictable implementation
+  - No external SDK dependencies
+  - Full control over invoice format
+  - Faster implementation (<2 hours vs 6+ hours SDK integration)
 
-**Fallback Option: PayAI Network API**
-- **Package:** Direct HTTP API calls (no SDK)
-- **Use if:**
-  - Corbits SDK documentation insufficient (<2 hours to working integration)
-  - Breaking bugs discovered in SDK
-  - Integration complexity exceeds 6-hour allocated budget
-- **Trade-off:** Lose Corbits bonus prize, but faster integration
+**Solana Address Generation (for testing):**
+- **Mock addresses:** Generate valid Base58 format test addresses (32-44 chars)
+- **No real blockchain interaction required** for mock server
+- Use `bs58` crate for Base58 encoding/validation
 
-**Not Using: Coinbase CDP SDK**
-- **Reason:** Base-first (not Solana-first), heavier dependency footprint
-- **Trade-off:** Doesn't qualify for Corbits bonus, but has 77-80% market share
-
-**Decision Criteria:**
-1. **Setup time:** Must achieve working integration in <6 hours
-2. **Documentation quality:** Clear examples for invoice generation, payment verification
-3. **Community support:** Active GitHub issues, Discord server responsiveness
-4. **Prize alignment:** Corbits SDK = +$5k bonus (20% of target prize)
+**Optional: SDK Integration (Post-Hackathon)**
+- Can add Corbits/PayAI SDK integration in future versions if needed
+- Focus on core value proposition first (testing/validation/security)
 
 ### HTTP & Networking
 
 **Mock Server:**
-- **Express.js 4.x** - HTTP server framework
+- **actix-web 4.9** - Pure Rust HTTP server framework
+  - Native async/await with tokio
   - Middleware architecture for policy enforcement
-  - CORS support for frontend testing
+  - Built-in CORS support
   - Simple routing for configurable pricing
 
 **HTTP Client:**
-- **Axios 1.x** - HTTP client for `verify` commands
+- **reqwest 0.12** - Async HTTP client for `verify` commands
   - Timeout handling, retry logic
-  - Request/response interceptors for logging
+  - JSON deserialization support
 
 ### Solana Integration
 
 **Blockchain Client:**
-- **@solana/web3.js 1.x** - Official Solana JavaScript SDK
+- **solana-client 2.0** - Official Rust Solana SDK
   - RPC queries for transaction status (FR-4)
   - Address validation (Base58 format checking)
   - Network switching (devnet, testnet, mainnet)
@@ -784,17 +777,15 @@ jobs:
 ### Testing Infrastructure
 
 **Test Framework:**
-- **Vitest** - Fast unit test runner
-  - TypeScript support out-of-box
-  - Compatible with Jest APIs (easy migration)
-  - ESM-first design
+- **Rust built-in tests** - Unit tests with `#[cfg(test)]`
+- **cargo-nextest** - Fast parallel test runner (optional)
 
 **Assertions:**
-- **Vitest built-in** - Chai-compatible assertions
-- **Custom matchers** - For x402-specific assertions (invoice format, header compliance)
+- **assert!** macros - Rust standard library
+- **Custom assertions** - For x402-specific validations (invoice format, header compliance)
 
 **Coverage:**
-- **c8** - Code coverage tool (V8 native)
+- **cargo-tarpaulin** - Code coverage tool
 - **Target:** 80%+ coverage (per NFR-M1)
 
 **Dogfooding:**
@@ -804,57 +795,49 @@ jobs:
 ### Code Quality Tools
 
 **Linting:**
-- **ESLint 8.x** - JavaScript/TypeScript linter
-- **Config:** Airbnb style guide + TypeScript extensions
+- **clippy** - Rust linter (built-in)
+- **rustfmt** - Code formatter (built-in)
 - **Goal:** 0 errors, 0 warnings before release (NFR-M1)
 
-**Formatting:**
-- **Prettier 3.x** - Opinionated code formatter
-- **Integration:** ESLint + Prettier (no conflicts)
-
 **Type Checking:**
-- **TypeScript strict mode** - All strict flags enabled
-- **No implicit any** - Every value must have explicit or inferred type
+- **Rust type system** - Compile-time type safety
+- **No unsafe code** - Unless absolutely necessary (clearly documented)
 
 ### Development Tools
 
 **Build:**
 - **cargo** - Rust build system and package manager
-- **tsup/esbuild** - TypeScript bundler (for embedded JavaScript)
-- **build.rs** - Custom build script for TypeScript compilation
-- **Output:** Single binary (~3-5MB) with embedded JavaScript runtime
+- **Output:** Single binary (~2-3MB) pure Rust
 
 **Package Management:**
 - **Cargo.toml** - Rust dependencies with workspace structure
-- **npm** - TypeScript dependencies only (development)
-- **Lock files:** Cargo.lock, package-lock.json (both committed to Git)
+- **Lock files:** Cargo.lock (committed to Git)
 
 **Release:**
 - **cargo-release** - Rust release automation
-- **npm publish** - Optional npm wrapper distribution
+- **GitHub releases** - Binary distribution for all platforms
 - **Semantic versioning:** Enforced via Cargo.toml
 
 ### Dependencies Budget
 
-**Binary Size Target:** 3-5MB (per NFR-D1)
-- Rust core: ~2MB
-- Embedded V8 runtime: ~1-3MB
+**Binary Size Target:** 2-3MB (per NFR-D1)
+- Rust binary: ~2-3MB
 - Optimization: Release profile, strip symbols, LTO
 
 **Security:**
 - **cargo audit** - Run before every release (0 critical vulnerabilities required)
-- **Dependency review** - All Rust crates and npm packages vetted
+- **Dependency review** - All Rust crates vetted
 - **Regular updates** - Monthly security patch review
 
 ### Architecture Decision Records
 
 **Key Decisions Documented:**
-1. **Hybrid Rust + TypeScript** - Performance + Corbits SDK integration (see architecture.md ADR-001)
-2. **Clap over structopt** - Better derive macros, active development
-3. **deno_core over Node.js** - Embedded V8, single binary distribution
-4. **Corbits SDK over CDP SDK** - Solana-first + $5k bonus prize alignment
-5. **Express for mock server** - Simplicity (via deno_core embedded runtime)
-6. **tokio current_thread** - Required for deno_core V8 constraints (see architecture.md ADR-002)
+1. **Pure Rust Implementation (KISS)** - Simplicity over complexity (see architecture.md ADR-001)
+2. **Clap 4.5** - Industry-standard CLI framework with derive macros
+3. **actix-web over Express.js** - Pure Rust HTTP server, no multi-language complexity
+4. **anyhow for error handling** - Ergonomic error propagation with context
+5. **tokio multi-thread runtime** - No V8 constraints, can use full async capabilities
+6. **Manual x402 protocol** - Simple invoice generation, no external SDK dependencies
 
 ---
 
