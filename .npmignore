@@ -1,0 +1,28 @@
+# Development files
+tests/
+.github/
+*.log
+
+# Source files (we only distribute the binary)
+crates/
+ts/src/
+ts/node_modules/
+ts/package.json
+ts/tsconfig.json
+ts/tsup.config.ts
+
+# Build artifacts to exclude
+target/debug/
+*.rs
+Cargo.toml
+Cargo.lock
+
+# IDE and OS
+.vscode/
+.idea/
+.DS_Store
+
+# Documentation source (keep compiled docs)
+docs/
+bmad/
+hackathon-research/

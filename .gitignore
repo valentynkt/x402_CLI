@@ -1,0 +1,27 @@
+# Rust build artifacts
+target/
+# Note: Cargo.lock is committed for binary projects (reproducible builds)
+
+# TypeScript build artifacts
+ts/dist/
+ts/node_modules/
+
+# npm
+node_modules/
+npm-debug.log
+*.tgz
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local

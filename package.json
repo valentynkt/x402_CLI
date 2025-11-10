@@ -1,0 +1,40 @@
+{
+  "name": "x402-dev",
+  "version": "0.1.0",
+  "description": "x402 protocol development toolkit for Solana",
+  "keywords": [
+    "x402",
+    "solana",
+    "payment",
+    "protocol",
+    "cli",
+    "development",
+    "toolkit"
+  ],
+  "homepage": "https://github.com/valentynkit/x402-dev#readme",
+  "bugs": {
+    "url": "https://github.com/valentynkit/x402-dev/issues"
+  },
+  "license": "MIT",
+  "author": "Valik",
+  "bin": {
+    "x402-dev": "./target/release/x402-dev"
+  },
+  "files": [
+    "target/release/x402-dev",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "os": [
+    "darwin",
+    "linux",
+    "win32"
+  ],
+  "cpu": [
+    "x64",
+    "arm64"
+  ]
+}

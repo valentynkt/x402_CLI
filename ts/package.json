@@ -1,0 +1,14 @@
+{
+  "name": "x402-dev-runtime",
+  "version": "0.1.0",
+  "description": "TypeScript runtime for x402-dev toolkit",
+  "private": true,
+  "scripts": {
+    "build": "tsup"
+  },
+  "devDependencies": {
+    "typescript": "^5.2.0",
+    "tsup": "^7.2.0",
+    "@types/node": "^20.0.0"
+  }
+}

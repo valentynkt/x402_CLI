@@ -1,0 +1,11 @@
+[package]
+name = "x402-cli"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "x402-dev"
+path = "src/main.rs"
+
+[dependencies]
+x402-core = { path = "../x402-core" }

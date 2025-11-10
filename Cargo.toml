@@ -1,0 +1,17 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/x402-cli",
+    "crates/x402-core",
+    "crates/xtask",
+]
+
+[workspace.dependencies]
+# Workspace dependencies will be added in future stories
+
+[profile.release]
+opt-level = "z"       # Optimize for size
+lto = "fat"           # Link-time optimization
+codegen-units = 1     # Single codegen unit for better optimization
+strip = "symbols"     # Strip debug symbols
+panic = "abort"       # No unwinding (smaller binary)

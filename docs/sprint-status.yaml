@@ -42,7 +42,7 @@ story_location: "{project-root}/docs/stories"
 development_status:
   # Epic 1: Foundation & CLI Infrastructure
   epic-1: backlog
-  1-1-project-scaffolding-build-system: backlog
+  1-1-project-scaffolding-build-system: done
   1-2-cli-framework-integration: backlog
   1-3-version-command-update-notifications: backlog
   1-4-configuration-management-system: backlog

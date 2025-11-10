@@ -1,0 +1,276 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>1</epicId>
+    <storyId>1</storyId>
+    <title>Project Scaffolding & Build System</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-10</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/1-1-project-scaffolding-build-system.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a developer</asA>
+    <iWant>a TypeScript project with proper build tooling</iWant>
+    <soThat>I can develop and package x402-dev efficiently</soThat>
+    <tasks>
+      <task id="1" ac="1,4">Initialize Rust workspace structure
+        <subtask>Create workspace Cargo.toml with 3 crates (x402-cli, x402-core, xtask)</subtask>
+        <subtask>Create crates/x402-cli/ binary crate with basic main.rs</subtask>
+        <subtask>Create crates/x402-core/ library crate with lib.rs</subtask>
+        <subtask>Create crates/xtask/ for build automation</subtask>
+        <subtask>Add workspace dependencies section to root Cargo.toml</subtask>
+        <subtask>Configure release profile (opt-level="z", lto="fat", strip="symbols")</subtask>
+      </task>
+      <task id="2" ac="1,2,3">Set up TypeScript project structure
+        <subtask>Create ts/ directory for TypeScript sources</subtask>
+        <subtask>Initialize ts/package.json with scripts, dependencies, devDependencies</subtask>
+        <subtask>Create ts/tsconfig.json (target: ES2022, module: ESNext, strict: true)</subtask>
+        <subtask>Create ts/src/runtime.ts as entry point</subtask>
+        <subtask>Add tsup configuration for ESM and CJS output</subtask>
+        <subtask>Install dependencies: typescript, tsup, @types/node</subtask>
+      </task>
+      <task id="3" ac="1,2">Configure build system integration
+        <subtask>Create crates/x402-core/build.rs to invoke TypeScript build</subtask>
+        <subtask>Add npm build script: "build": "tsup src/runtime.ts --format esm,cjs --minify"</subtask>
+        <subtask>Test TypeScript bundling produces ts/dist/runtime.js (ESM) and ts/dist/runtime.cjs (CJS)</subtask>
+        <subtask>Verify both ESM and CJS bundles include JavaScript runtime code</subtask>
+      </task>
+      <task id="4" ac="4">Set up Git and npm ignore files
+        <subtask>Create .gitignore (target/, node_modules/, ts/dist/, .DS_Store)</subtask>
+        <subtask>Create .npmignore (tests/, .github/, *.log)</subtask>
+        <subtask>Verify npm pack excludes unnecessary files</subtask>
+      </task>
+      <task id="5" ac="3,4">Create package.json for npm distribution
+        <subtask>Create root package.json with name: "x402-dev"</subtask>
+        <subtask>Add bin entry: "bin": { "x402-dev": "./target/release/x402-dev" }</subtask>
+        <subtask>Set version: "0.1.0"</subtask>
+        <subtask>Add engines: "node": ">=18.0.0"</subtask>
+        <subtask>Add files array to control npm package contents</subtask>
+        <subtask>Test npm pack produces bundle <10MB</subtask>
+      </task>
+      <task id="6" ac="1,2,3,4">Verify complete build pipeline
+        <subtask>Run cargo build --release and verify success</subtask>
+        <subtask>Confirm TypeScript bundles created at ts/dist/runtime.js (ESM) and ts/dist/runtime.cjs (CJS)</subtask>
+        <subtask>Verify binary size is reasonable (~2-5MB for initial scaffold, before deno_core integration)</subtask>
+        <subtask>Test binary executes: ./target/release/x402-dev --version (even if placeholder)</subtask>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="1">
+      <given>a new project directory</given>
+      <when>I run the build command</when>
+      <then>TypeScript compiles to JavaScript without errors</then>
+    </criterion>
+    <criterion id="2">
+      <description>The output includes both ESM and CJS formats</description>
+    </criterion>
+    <criterion id="3">
+      <description>The package.json includes correct bin entry for CLI executable</description>
+    </criterion>
+    <criterion id="4">
+      <description>npm pack produces a bundle <10MB</description>
+    </criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epic 1: Foundation & CLI Infrastructure</title>
+        <section>Story 1.1: Project Scaffolding & Build System</section>
+        <snippet>Establishes TypeScript project with tsup for zero-config bundling, TypeScript 5.x strict mode, ES2022 target. Produces ESM and CJS formats. Binary size target <10MB.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document</title>
+        <section>Complete Project Structure</section>
+        <snippet>Hybrid Rust + TypeScript architecture with 3-crate workspace (x402-cli, x402-core, xtask). Uses deno_core for embedded V8 runtime. Build system: cargo invokes TypeScript bundling via build.rs.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document</title>
+        <section>Build Configuration</section>
+        <snippet>Release profile: opt-level="z" (size optimization), lto="fat" (link-time optimization), codegen-units=1, strip="symbols", panic="abort". Target binary size: 8-15MB including V8 runtime.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document</title>
+        <section>ADR-001: Hybrid Rust + TypeScript Architecture</section>
+        <snippet>Embed deno_core V8 runtime in Rust binary for Corbits SDK integration. Single binary distribution with no Node.js dependency. TypeScript compiled at build time via build.rs.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document</title>
+        <section>ADR-003: Simplified Crate Structure</section>
+        <snippet>3-crate workspace: x402-cli (binary), x402-core (library), xtask (build automation). Faster iteration during hackathon, simpler dependency management.</snippet>
+      </doc>
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>Technology Stack - Build</section>
+        <snippet>Build tools: cargo (Rust), tsup/esbuild (TypeScript bundler), build.rs (custom build script). Output: single binary (~3-5MB) with embedded JavaScript runtime. Lock files committed to Git.</snippet>
+      </doc>
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>Distribution</section>
+        <snippet>npm Package Distribution: npm install -g x402-dev or npx x402-dev. No runtime dependencies (self-contained Rust binary with embedded V8). Cross-platform: macOS, Linux, Windows.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <!-- No existing code for this initial story - greenfield project -->
+    </code>
+    <dependencies>
+      <rust>
+        <package name="cargo" version="latest" scope="build-tool">Rust package manager and build system</package>
+        <note>Initial workspace has no Rust dependencies yet - will be added in future stories</note>
+        <note>workspace.dependencies section reserved for shared crates across workspace</note>
+      </rust>
+      <typescript>
+        <package name="typescript" version="^5.2.0" scope="devDependencies">TypeScript compiler</package>
+        <package name="tsup" version="^7.2.0" scope="devDependencies">Zero-config TypeScript bundler powered by esbuild</package>
+        <package name="@types/node" version="^20.0.0" scope="devDependencies">Type definitions for Node.js APIs</package>
+        <note>Installed in ts/ directory via npm install</note>
+        <note>No runtime dependencies - TypeScript code bundled at build time</note>
+      </typescript>
+      <npm>
+        <note>Root package.json created for npm distribution (global install support)</note>
+        <note>npm CLI used for publishing to npm registry</note>
+      </npm>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="architecture">
+      <description>Hybrid Rust + TypeScript architecture (ADR-001): Rust core with embedded V8 runtime for Corbits SDK integration</description>
+      <source>docs/architecture.md#ADR-001</source>
+    </constraint>
+    <constraint type="structure">
+      <description>3-Crate workspace structure (ADR-003): x402-cli (binary), x402-core (library), xtask (build automation)</description>
+      <source>docs/architecture.md#ADR-003</source>
+    </constraint>
+    <constraint type="build">
+      <description>Single binary distribution: TypeScript compiled at build time via build.rs and embedded into Rust binary</description>
+      <source>docs/architecture.md#Build-Configuration</source>
+    </constraint>
+    <constraint type="size">
+      <description>Binary size target: 8-15MB final size (includes V8 runtime ~5MB + Rust + bundled JavaScript). Initial scaffold ~2-5MB before deno_core integration.</description>
+      <source>docs/architecture.md#Performance-Considerations</source>
+    </constraint>
+    <constraint type="compilation">
+      <description>TypeScript strict mode enabled. Target ES2022 for modern features. Module system: ESNext with bundler resolution.</description>
+      <source>docs/epics.md#Story-1.1-Technical-Notes</source>
+    </constraint>
+    <constraint type="release">
+      <description>Release profile optimization: opt-level="z" (size), lto="fat" (link-time optimization), strip="symbols", panic="abort"</description>
+      <source>docs/architecture.md#Build-Configuration</source>
+    </constraint>
+    <constraint type="formats">
+      <description>Output must include both ESM and CJS formats for TypeScript bundle</description>
+      <source>docs/epics.md#Acceptance-Criteria-2</source>
+    </constraint>
+    <constraint type="naming">
+      <description>Package name: "x402-dev". Binary name: "x402-dev". Bin entry points to: "./target/release/x402-dev"</description>
+      <source>docs/PRD.md#Distribution</source>
+    </constraint>
+    <constraint type="engines">
+      <description>Node.js 18+ LTS minimum for development builds (TypeScript bundling). No Node.js dependency for end users (self-contained binary).</description>
+      <source>docs/PRD.md#Technology-Stack</source>
+    </constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>Cargo Workspace Structure</name>
+      <kind>project-structure</kind>
+      <signature>
+        Root Cargo.toml defines workspace with members: ["crates/x402-cli", "crates/x402-core", "crates/xtask"]
+        Includes [workspace.dependencies] section for shared dependencies
+        Includes [profile.release] section for size optimization
+      </signature>
+      <path>Cargo.toml</path>
+    </interface>
+    <interface>
+      <name>Build Script Integration</name>
+      <kind>build-script</kind>
+      <signature>
+        crates/x402-core/build.rs invokes: npm run build in ts/ directory
+        Triggers TypeScript compilation before Rust compilation
+        Ensures bundled JavaScript exists before embedding
+      </signature>
+      <path>crates/x402-core/build.rs</path>
+    </interface>
+    <interface>
+      <name>TypeScript Package Structure</name>
+      <kind>package-manifest</kind>
+      <signature>
+        ts/package.json defines:
+        - scripts.build: "tsup src/runtime.ts --format esm,cjs --minify"
+        - devDependencies: typescript ^5.2.0, tsup ^7.2.0, @types/node ^20.0.0
+      </signature>
+      <path>ts/package.json</path>
+    </interface>
+    <interface>
+      <name>npm Distribution Package</name>
+      <kind>package-manifest</kind>
+      <signature>
+        Root package.json defines:
+        - name: "x402-dev"
+        - version: "0.1.0"
+        - bin: { "x402-dev": "./target/release/x402-dev" }
+        - engines: { "node": ">=18.0.0" }
+        - files: array controlling npm package contents
+      </signature>
+      <path>package.json</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Testing for this story focuses on build verification rather than runtime behavior.
+
+      Rust: Use #[cfg(test)] modules for unit tests. Integration tests in tests/ directory (added in future stories).
+
+      Build verification: Ensure cargo build succeeds without errors. Verify TypeScript bundles are created correctly.
+
+      Package verification: Test npm pack produces bundle under size limit.
+
+      No runtime tests for this story - only sets up scaffolding. Functional testing begins in Story 1.2 (CLI Framework).
+    </standards>
+    <locations>
+      <location>crates/*/src/*.rs - Rust unit tests in #[cfg(test)] modules</location>
+      <location>tests/ - Integration tests (created in future stories)</location>
+      <location>Build verification - manual verification via cargo build commands</location>
+    </locations>
+    <ideas>
+      <idea ac="1">
+        Test: Verify cargo build --release completes without errors
+        Approach: Run cargo build and check exit code is 0
+        Expected: Successful compilation of all 3 crates
+      </idea>
+      <idea ac="2">
+        Test: Verify both ESM and CJS bundles are created
+        Approach: After npm run build, check for ts/dist/runtime.js and ts/dist/runtime.cjs
+        Expected: Both files exist and contain bundled JavaScript code
+      </idea>
+      <idea ac="3">
+        Test: Verify package.json bin entry is correct
+        Approach: Parse package.json and validate bin field structure
+        Expected: bin.x402-dev points to "./target/release/x402-dev"
+      </idea>
+      <idea ac="4">
+        Test: Verify npm pack bundle size is under 10MB
+        Approach: Run npm pack, measure resulting tarball size
+        Expected: Bundle size less than 10MB (10,485,760 bytes)
+      </idea>
+      <idea ac="1">
+        Test: Verify binary executes
+        Approach: Run ./target/release/x402-dev --version (even if placeholder output)
+        Expected: Binary runs without crash (exit code 0)
+      </idea>
+    </ideas>
+  </tests>
+</story-context>

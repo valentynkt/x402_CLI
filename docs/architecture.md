@@ -13,15 +13,17 @@ x402-dev is a **hybrid Rust + TypeScript CLI toolkit** for x402 protocol develop
 
 - **Rust core** (performance, type safety, small binary size)
 - **TypeScript runtime** (Corbits SDK integration via deno_core)
-- **Single binary distribution** (~3-5MB with embedded JavaScript)
+- **Single binary distribution** (~8-15MB including V8 runtime)
 
 **Key Differentiation:** First comprehensive x402 dev tool using embedded V8 runtime for seamless npm package integration while maintaining Rust performance benefits.
 
 **Performance Targets:**
-- Binary size: 3-5MB (vs 8-10MB pure TypeScript)
+- Binary size: 8-15MB (including embedded V8 runtime ~5MB + bundled JavaScript)
 - Command execution: <1 second (excluding network calls)
-- Policy evaluation: ~1M requests/second (Rust CEL engine)
+- Policy evaluation: High performance (Rust CEL engine, benchmarks TBD)
 - Mock server startup: <2 seconds
+
+**Note:** Binary size includes V8 snapshot (~5MB), Rust CLI, and bundled TypeScript. Pure Rust would be ~2MB.
 
 ---
 
@@ -48,21 +50,21 @@ mkdir -p crates/{x402-cli,x402-core,xtask} ts
 |----------|----------|---------|---------------|-----------|
 | **Language** | Rust | 1.75+ | All | Performance, type safety, small binary |
 | **CLI Framework** | Clap | 4.5 | Epic 1, 2-6 | Industry standard, derive macros, excellent DX |
-| **Async Runtime** | tokio | 1.40 (`current_thread`) | All | **CRITICAL:** deno_core requires single-threaded |
-| **JS Runtime** | deno_core | 0.311 | Epic 2, 5, 6 | Embed TypeScript for Corbits SDK integration |
+| **Async Runtime** | tokio | 1.48 (`current_thread`) | All | **CRITICAL:** deno_core requires single-threaded |
+| **JS Runtime** | deno_core | 0.367 | Epic 1, 4, 6 | Embed TypeScript for Corbits SDK integration |
 | **Error Handling (Lib)** | thiserror | 1.0 | All (x402-core) | Typed errors for library code |
 | **Error Handling (CLI)** | miette | 7.0 | All (x402-cli) | Beautiful diagnostics with code snippets |
 | **Error Handling (Util)** | anyhow | 1.0 | All (xtask) | Convenience for automation scripts |
-| **Policy Engine** | cel-interpreter | 0.8 | Epic 5 | Pure Rust CEL, compatible with current_thread |
-| **x402 SDK** | Corbits/Faremeter | latest | Epic 2, 5 | $5k bonus, Solana-first, open-source |
-| **Mock Server** | Express.js | 4.x | Epic 2 | TypeScript (via deno_core), simple integration |
+| **Policy Engine** | cel-interpreter | 0.10 | Epic 4 | Pure Rust CEL (synchronous, runtime-agnostic) |
+| **x402 SDK** | Corbits/Faremeter | latest | Epic 1, 4 | $5k bonus, Solana-first, open-source |
+| **Mock Server** | Express.js | 4.x | Epic 1 | TypeScript (via deno_core), simple integration |
 | **Configuration** | serde_yaml + cosmiconfig pattern | - | Epic 1 | Multi-tier config (CLI > env > file > defaults) |
 | **Logging** | tracing + tracing-subscriber | 0.1 / 0.3 | All | Structured logging, async-aware |
 | **HTTP Client** | reqwest | 0.12 | Epic 4 | Async HTTP for verification |
 | **Solana SDK** | @solana/web3.js | 1.x | Epic 4 | RPC queries (optional feature) |
 | **Build Tool** | tsup / esbuild | - | Epic 1 | TypeScript → single .js bundle |
 | **Package Manager** | npm | - | All | TypeScript dependencies |
-| **Distribution** | npm (global install) | - | Epic 7 | `npm install -g x402-dev` |
+| **Distribution** | npm (global install) | - | Epic 6 | `npm install -g x402-dev` |
 
 ---
 
@@ -84,12 +86,12 @@ thiserror = "1.0"
 anyhow = "1.0"
 
 # Async Runtime (CRITICAL: current_thread for deno_core)
-tokio = { version = "1.40", features = ["rt", "macros", "process", "fs", "io-util"] }
+tokio = { version = "1.48", features = ["rt", "macros", "process", "fs", "io-util"] }
 futures = "0.3"
 
 # deno_core Integration
-deno_core = "0.311"
-serde_v8 = "0.227"
+deno_core = "0.367"
+serde_v8 = "0.276"
 
 # Serialization
 serde = { version = "1.0", features = ["derive"] }
@@ -101,7 +103,7 @@ config = "0.14"
 dotenvy = "0.15"
 
 # CEL Policy Engine (Pure Rust)
-cel-interpreter = "0.8"
+cel-interpreter = "0.10"
 
 # HTTP Client
 reqwest = { version = "0.12", features = ["json"] }
@@ -115,8 +117,8 @@ tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
 ```json
 {
   "dependencies": {
-    "@faremeter/fetch": "^latest",
-    "@faremeter/middleware": "^latest",
+    "@faremeter/payment-solana": "^latest",
+    "@faremeter/wallet-solana": "^latest",
     "express": "^4.18.0",
     "cors": "^2.8.5"
   },
@@ -141,7 +143,7 @@ strip = "symbols"     # Strip debug symbols
 panic = "abort"       # No unwinding (smaller binary)
 ```
 
-**Result:** ~3-5MB binary (vs 8-10MB pure TypeScript/Node.js)
+**Result:** ~8-15MB binary (V8 runtime + Rust + bundled JavaScript, vs 30MB+ with Node.js)
 
 ---
 
@@ -224,22 +226,22 @@ x402-dev/
 
 ## Epic to Architecture Mapping
 
-| Epic | Rust Modules | TypeScript Modules | Key Files |
-|------|--------------|-------------------|-----------|
-| **1: Foundation** | `x402-cli/src/{main, cli, context}` | - | `main.rs`, `cli.rs` |
-|  | `x402-core/src/{config, runtime}` | `ts/src/runtime.ts` | `config/loader.rs`, `runtime/js_runtime.rs` |
-| **2: Mock Server** | `x402-core/src/{server, protocol}` | `ts/src/{server, corbits}` | `server/manager.rs`, `server/app.ts` |
-|  | `x402-cli/src/commands/mock.rs` | - | CLI command |
-| **3: Test Runner** | `x402-core/src/test/` | - | `test/runner.rs`, `test/assertions.rs` |
-|  | `x402-cli/src/commands/test.rs` | - | CLI command |
-| **4: Validation** | `x402-core/src/{verify, monitor, solana}` | - | `verify/headers.rs`, `monitor/tail.rs` |
-|  | `x402-cli/src/commands/{verify, check, monitor}.rs` | - | CLI commands |
-| **5: Policy Engine** | `x402-core/src/policy/` | `ts/src/server/policy_middleware.ts` | `policy/engine.rs`, `policy/codegen/` |
-|  | `x402-cli/src/commands/policy.rs` | - | CLI command |
-| **6: Dev Experience** | `x402-core/src/{examples, doctor}` | - | `examples/scaffolder.rs`, `doctor/checks.rs` |
-|  | `x402-cli/src/commands/{examples, doctor}.rs` | - | CLI commands |
-| **7: Launch Prep** | `.github/workflows/` | - | `ci.yml`, `release.yml` |
-|  | `docs/`, `README.md` | - | Documentation |
+**Note:** Epics align with PRD structure (FR-1 through FR-11)
+
+| Epic | PRD FRs | Rust Modules | TypeScript Modules | Key Files |
+|------|---------|--------------|-------------------|-----------|
+| **1: Mock Server Infrastructure** | FR-1 | `x402-core/src/{server, protocol}` | `ts/src/{server, corbits}` | `server/manager.rs`, `server/app.ts` |
+|  |  | `x402-cli/src/commands/mock.rs` | - | CLI command |
+| **2: Automated Testing Framework** | FR-2 | `x402-core/src/test/` | - | `test/runner.rs`, `test/assertions.rs` |
+|  |  | `x402-cli/src/commands/test.rs` | - | CLI command |
+| **3: Validation & Verification Tools** | FR-3, FR-4 | `x402-core/src/{verify, monitor, solana}` | - | `verify/headers.rs`, `monitor/tail.rs` |
+|  |  | `x402-cli/src/commands/{verify, check, monitor}.rs` | - | CLI commands |
+| **4: Policy Enforcement Engine** | FR-5 | `x402-core/src/policy/` | `ts/src/server/policy_middleware.ts` | `policy/engine.rs`, `policy/codegen/` |
+|  |  | `x402-cli/src/commands/policy.rs` | - | CLI command |
+| **5: Middleware Generation** | FR-6 | `x402-core/src/policy/codegen/` | - | `codegen/express.rs`, `codegen/fastify.rs` |
+|  |  | `x402-cli/src/commands/policy.rs` | - | `policy generate` subcommand |
+| **6: CLI Infrastructure & DX** | FR-7, FR-8, FR-9, FR-10, FR-11 | `x402-cli/src/{main, cli, context}` | - | `main.rs`, `cli.rs` |
+|  |  | `x402-core/src/{config, runtime, examples, doctor}` | `ts/src/runtime.ts` | `config/loader.rs`, `doctor/checks.rs` |
 
 ---
 
@@ -265,10 +267,11 @@ const invoice = await Deno.core.ops.op_create_invoice(0.01, "GXk8v...qPz9");
 
 ```typescript
 // ts/src/corbits/client.ts
-import { generateInvoice } from '@faremeter/middleware';
+import { createPayment } from '@faremeter/payment-solana';
+import { createWallet } from '@faremeter/wallet-solana';
 
 export async function createInvoice(params: InvoiceParams): Promise<Invoice> {
-    return await generateInvoice({
+    return await createPayment({
         amount: params.amount,
         recipient: params.recipient,
         currency: 'USDC',
@@ -322,7 +325,7 @@ js_runtime.execute_script("<runtime>", js_code)?;
 **Trade-offs:**
 - ⚠️ Increased complexity (Rust ↔ JS boundary)
 - ⚠️ tokio runtime must be `current_thread` (V8 constraint)
-- ⚠️ Larger binary than pure Rust (~3-5MB vs ~2MB)
+- ⚠️ Larger binary than pure Rust (~8-15MB vs ~2MB, due to V8 runtime)
 
 **Alternative Rejected:** Pure Rust with HTTP calls to Corbits API (loses SDK benefits, risks protocol drift)
 
@@ -534,11 +537,11 @@ info!(
 - **opt-level="z":** Size-focused optimization
 - **LTO="fat":** Link-time optimization
 - **strip="symbols":** Remove debug symbols
-- **Result:** ~3-5MB binary
+- **Result:** ~8-15MB binary (V8 runtime + Rust + bundled JavaScript)
 
 ### Runtime Performance
 
-- **Policy evaluation:** Rust CEL engine (~1M req/sec)
+- **Policy evaluation:** High performance (Rust CEL engine, actual throughput depends on policy complexity)
 - **Command execution:** <1 second (excluding network)
 - **Mock server startup:** <2 seconds
 - **Test runner:** 100 tests in <10 seconds
@@ -644,7 +647,7 @@ cargo nextest run --all
 - ✅ Single binary distribution
 - ✅ $5k Corbits Project bonus
 - ⚠️ Requires current_thread tokio runtime
-- ⚠️ Increased binary size (~3-5MB vs ~2MB pure Rust)
+- ⚠️ Increased binary size (~8-15MB vs ~2MB pure Rust, due to V8 runtime ~5MB)
 
 ### ADR-002: tokio current_thread Runtime
 
@@ -676,10 +679,10 @@ cargo nextest run --all
 **Decision:** Use cel-interpreter (pure Rust) instead of cel-cxx (FFI to C++).
 
 **Consequences:**
-- ✅ Compatible with current_thread tokio
+- ✅ Compatible with current_thread tokio (synchronous library, runtime-agnostic)
 - ✅ No C++ toolchain dependency
 - ✅ Production usage validated
-- ⚠️ Version 0.8.x (pre-1.0, but active development)
+- ✅ Version 0.10.x (stable, actively maintained)
 
 ---
 
