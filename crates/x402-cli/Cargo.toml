@@ -19,3 +19,4 @@ serde_yaml = { workspace = true }
 directories = { workspace = true }
 semver = { workspace = true }
 colored = { workspace = true }
+dialoguer = { workspace = true }

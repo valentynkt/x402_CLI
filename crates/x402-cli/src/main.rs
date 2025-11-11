@@ -5,7 +5,7 @@ mod errors;
 
 use clap::Parser;
 use cli::{Cli, Commands};
-use commands::{config as config_cmd, version};
+use commands::{config as config_cmd, init, version};
 use errors::{convert_anyhow_to_cli_error, print_error};
 
 // ADR-002: Use multi-thread runtime (no V8 constraints in pure Rust)
@@ -46,10 +46,7 @@ async fn main() {
             println!("Command 'doctor' not yet implemented - coming in Epic 4");
             Ok(())
         }
-        Commands::Init(_) => {
-            println!("Command 'init' not yet implemented - coming in Epic 6");
-            Ok(())
-        }
+        Commands::Init(args) => init::run(&args).await,
         Commands::Version(args) => version::run(&args).await,
         Commands::Config(args) => config_cmd::run(&args).await,
     };

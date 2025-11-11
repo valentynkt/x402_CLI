@@ -35,6 +35,9 @@ serde_yaml = "0.9"
 # Terminal colors (Story 1.5)
 colored = "2.1"
 
+# Interactive prompts (Story 1.7)
+dialoguer = "0.11"
+
 [profile.release]
 opt-level = "z"       # Optimize for size
 lto = "fat"           # Link-time optimization

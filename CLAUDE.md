@@ -1,254 +1,352 @@
-# CLAUDE.md
+# Claude Code Configuration - SPARC Development Environment
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+## 🚨 CRITICAL: CONCURRENT EXECUTION & FILE MANAGEMENT
+
+**ABSOLUTE RULES**:
+1. ALL operations MUST be concurrent/parallel in a single message
+2. **NEVER save working files, text/mds and tests to the root folder**
+3. ALWAYS organize files in appropriate subdirectories
+4. **USE CLAUDE CODE'S TASK TOOL** for spawning agents concurrently, not just MCP
+
+### ⚡ GOLDEN RULE: "1 MESSAGE = ALL RELATED OPERATIONS"
+
+**MANDATORY PATTERNS:**
+- **TodoWrite**: ALWAYS batch ALL todos in ONE call (5-10+ todos minimum)
+- **Task tool (Claude Code)**: ALWAYS spawn ALL agents in ONE message with full instructions
+- **File operations**: ALWAYS batch ALL reads/writes/edits in ONE message
+- **Bash commands**: ALWAYS batch ALL terminal operations in ONE message
+- **Memory operations**: ALWAYS batch ALL memory store/retrieve in ONE message
+
+### 🎯 CRITICAL: Claude Code Task Tool for Agent Execution
+
+**Claude Code's Task tool is the PRIMARY way to spawn agents:**
+```javascript
+// ✅ CORRECT: Use Claude Code's Task tool for parallel agent execution
+[Single Message]:
+  Task("Research agent", "Analyze requirements and patterns...", "researcher")
+  Task("Coder agent", "Implement core features...", "coder")
+  Task("Tester agent", "Create comprehensive tests...", "tester")
+  Task("Reviewer agent", "Review code quality...", "reviewer")
+  Task("Architect agent", "Design system architecture...", "system-architect")
+```
+
+**MCP tools are ONLY for coordination setup:**
+- `mcp__claude-flow__swarm_init` - Initialize coordination topology
+- `mcp__claude-flow__agent_spawn` - Define agent types for coordination
+- `mcp__claude-flow__task_orchestrate` - Orchestrate high-level workflows
+
+### 📁 File Organization Rules
+
+**NEVER save to root folder. Use these directories:**
+- `/src` - Source code files
+- `/tests` - Test files
+- `/docs` - Documentation and markdown files
+- `/config` - Configuration files
+- `/scripts` - Utility scripts
+- `/examples` - Example code
 
 ## Project Overview
 
-This is a **Solana x402 AI Hackathon** project workspace (October 28 - November 11, 2025). The project uses the **BMAD Framework v6.0.0-alpha.5** for AI-driven agile development methodology.
+This project uses SPARC (Specification, Pseudocode, Architecture, Refinement, Completion) methodology with Claude-Flow orchestration for systematic Test-Driven Development.
 
-**Current State:** Research and framework setup complete. No implementation code yet - ready to start building.
+## SPARC Commands
 
-## Hackathon Context
+### Core Commands
+- `npx claude-flow sparc modes` - List available modes
+- `npx claude-flow sparc run <mode> "<task>"` - Execute specific mode
+- `npx claude-flow sparc tdd "<feature>"` - Run complete TDD workflow
+- `npx claude-flow sparc info <mode>` - Get mode details
 
-- **Event:** Solana x402 AI Hackathon
-- **Deadline:** November 11, 2025 (submissions close)
-- **Winners Announced:** November 17, 2025
-- **Total Prizes:** $100,000+ across 13 tracks
-- **Focus:** AI agents using x402 payment protocol for autonomous blockchain payments
+### Batchtools Commands
+- `npx claude-flow sparc batch <modes> "<task>"` - Parallel execution
+- `npx claude-flow sparc pipeline "<task>"` - Full pipeline processing
+- `npx claude-flow sparc concurrent <mode> "<tasks-file>"` - Multi-task processing
 
-### Key Requirements
-- Must integrate x402 protocol (HTTP 402 + stablecoin payments)
-- Must be open source
-- Must deploy to Solana devnet or mainnet
-- Must include 3-minute demo video
-- Must have documentation (README, architecture diagrams)
+### Build Commands
+- `npm run build` - Build project
+- `npm run test` - Run tests
+- `npm run lint` - Linting
+- `npm run typecheck` - Type checking
 
-### x402 Protocol Core Concept
-HTTP-native crypto payments enabling AI agents to transact autonomously:
-1. Client requests resource → Server responds `402 Payment Required`
-2. Client constructs USDC payment transaction on Solana
-3. Payment verified on-chain via facilitator
-4. Resource delivered (<2 seconds total)
+## SPARC Workflow Phases
 
-## Technology Stack
+1. **Specification** - Requirements analysis (`sparc run spec-pseudocode`)
+2. **Pseudocode** - Algorithm design (`sparc run spec-pseudocode`)
+3. **Architecture** - System design (`sparc run architect`)
+4. **Refinement** - TDD implementation (`sparc tdd`)
+5. **Completion** - Integration (`sparc run integration`)
 
-### Blockchain Layer
-- **Primary:** Solana (400ms finality, $0.00025 tx cost)
-- **Secondary:** Base (for cross-chain scenarios)
-- **Payment Token:** USDC stablecoin
-- **Protocol:** x402 (HTTP 402 + on-chain verification)
+## Code Style & Best Practices
 
-### Available SDKs & Tools
-- **Corbits/Faremeter** - Open-source Solana-first framework (LGPL-3.0)
-- **Coinbase CDP SDK** - Official x402 implementation (77-80% market share)
-- **PayAI Network** - 7-chain facilitator with fee coverage
-- **Switchboard** - Oracle data feeds with x402 integration
-- **x402-mcp** - Model Context Protocol integration
+- **Modular Design**: Files under 500 lines
+- **Environment Safety**: Never hardcode secrets
+- **Test-First**: Write tests before implementation
+- **Clean Architecture**: Separate concerns
+- **Documentation**: Keep updated
 
-### Development Framework
-- **BMAD Framework** - AI-agent driven workflow system
-  - 19+ specialized agents (PM, Architect, Developer, etc.)
-  - 60+ workflows covering complete SDLC
-  - Scale-adaptive (Levels 0-4 based on complexity)
-  - 3 development tracks: Quick Flow, BMad Method, Enterprise Method
+## 🚀 Available Agents (54 Total)
 
-## Project Structure
+### Core Development
+`coder`, `reviewer`, `tester`, `planner`, `researcher`
 
+### Swarm Coordination
+`hierarchical-coordinator`, `mesh-coordinator`, `adaptive-coordinator`, `collective-intelligence-coordinator`, `swarm-memory-manager`
+
+### Consensus & Distributed
+`byzantine-coordinator`, `raft-manager`, `gossip-coordinator`, `consensus-builder`, `crdt-synchronizer`, `quorum-manager`, `security-manager`
+
+### Performance & Optimization
+`perf-analyzer`, `performance-benchmarker`, `task-orchestrator`, `memory-coordinator`, `smart-agent`
+
+### GitHub & Repository
+`github-modes`, `pr-manager`, `code-review-swarm`, `issue-tracker`, `release-manager`, `workflow-automation`, `project-board-sync`, `repo-architect`, `multi-repo-swarm`
+
+### SPARC Methodology
+`sparc-coord`, `sparc-coder`, `specification`, `pseudocode`, `architecture`, `refinement`
+
+### Specialized Development
+`backend-dev`, `mobile-dev`, `ml-developer`, `cicd-engineer`, `api-docs`, `system-architect`, `code-analyzer`, `base-template-generator`
+
+### Testing & Validation
+`tdd-london-swarm`, `production-validator`
+
+### Migration & Planning
+`migration-planner`, `swarm-init`
+
+## 🎯 Claude Code vs MCP Tools
+
+### Claude Code Handles ALL EXECUTION:
+- **Task tool**: Spawn and run agents concurrently for actual work
+- File operations (Read, Write, Edit, MultiEdit, Glob, Grep)
+- Code generation and programming
+- Bash commands and system operations
+- Implementation work
+- Project navigation and analysis
+- TodoWrite and task management
+- Git operations
+- Package management
+- Testing and debugging
+
+### MCP Tools ONLY COORDINATE:
+- Swarm initialization (topology setup)
+- Agent type definitions (coordination patterns)
+- Task orchestration (high-level planning)
+- Memory management
+- Neural features
+- Performance tracking
+- GitHub integration
+
+**KEY**: MCP coordinates the strategy, Claude Code's Task tool executes with real agents.
+
+## 🚀 Quick Setup
+
+```bash
+# Add MCP servers (Claude Flow required, others optional)
+claude mcp add claude-flow npx claude-flow@alpha mcp start
+claude mcp add ruv-swarm npx ruv-swarm mcp start  # Optional: Enhanced coordination
+claude mcp add flow-nexus npx flow-nexus@latest mcp start  # Optional: Cloud features
 ```
-/Hackaton/
-├── bmad/                      # BMAD Framework installation
-│   ├── core/                  # Core workflows & BMad Master agent
-│   ├── bmm/                   # BMad Method Module (project management)
-│   ├── bmb/                   # BMad Builder Module (create agents/workflows)
-│   ├── cis/                   # Creative Innovation Strategy Module
-│   ├── _cfg/manifest.yaml     # Installed modules manifest
-│   └── core/config.yaml       # Global configuration
-├── hackathon-research/        # Complete hackathon documentation
-│   ├── guides/
-│   ├── reference/
-│   └── tools/
-├── docs/                      # Generated documentation output
-└── .claude/                   # Claude Code configuration
+
+## MCP Tool Categories
+
+### Coordination
+`swarm_init`, `agent_spawn`, `task_orchestrate`
+
+### Monitoring
+`swarm_status`, `agent_list`, `agent_metrics`, `task_status`, `task_results`
+
+### Memory & Neural
+`memory_usage`, `neural_status`, `neural_train`, `neural_patterns`
+
+### GitHub Integration
+`github_swarm`, `repo_analyze`, `pr_enhance`, `issue_triage`, `code_review`
+
+### System
+`benchmark_run`, `features_detect`, `swarm_monitor`
+
+### Flow-Nexus MCP Tools (Optional Advanced Features)
+Flow-Nexus extends MCP capabilities with 70+ cloud-based orchestration tools:
+
+**Key MCP Tool Categories:**
+- **Swarm & Agents**: `swarm_init`, `swarm_scale`, `agent_spawn`, `task_orchestrate`
+- **Sandboxes**: `sandbox_create`, `sandbox_execute`, `sandbox_upload` (cloud execution)
+- **Templates**: `template_list`, `template_deploy` (pre-built project templates)
+- **Neural AI**: `neural_train`, `neural_patterns`, `seraphina_chat` (AI assistant)
+- **GitHub**: `github_repo_analyze`, `github_pr_manage` (repository management)
+- **Real-time**: `execution_stream_subscribe`, `realtime_subscribe` (live monitoring)
+- **Storage**: `storage_upload`, `storage_list` (cloud file management)
+
+**Authentication Required:**
+- Register: `mcp__flow-nexus__user_register` or `npx flow-nexus@latest register`
+- Login: `mcp__flow-nexus__user_login` or `npx flow-nexus@latest login`
+- Access 70+ specialized MCP tools for advanced orchestration
+
+## 🚀 Agent Execution Flow with Claude Code
+
+### The Correct Pattern:
+
+1. **Optional**: Use MCP tools to set up coordination topology
+2. **REQUIRED**: Use Claude Code's Task tool to spawn agents that do actual work
+3. **REQUIRED**: Each agent runs hooks for coordination
+4. **REQUIRED**: Batch all operations in single messages
+
+### Example Full-Stack Development:
+
+```javascript
+// Single message with all agent spawning via Claude Code's Task tool
+[Parallel Agent Execution]:
+  Task("Backend Developer", "Build REST API with Express. Use hooks for coordination.", "backend-dev")
+  Task("Frontend Developer", "Create React UI. Coordinate with backend via memory.", "coder")
+  Task("Database Architect", "Design PostgreSQL schema. Store schema in memory.", "code-analyzer")
+  Task("Test Engineer", "Write Jest tests. Check memory for API contracts.", "tester")
+  Task("DevOps Engineer", "Setup Docker and CI/CD. Document in memory.", "cicd-engineer")
+  Task("Security Auditor", "Review authentication. Report findings via hooks.", "reviewer")
+  
+  // All todos batched together
+  TodoWrite { todos: [...8-10 todos...] }
+  
+  // All file operations together
+  Write "backend/server.js"
+  Write "frontend/App.jsx"
+  Write "database/schema.sql"
 ```
 
-## Key Commands - BMAD Workflows
+## 📋 Agent Coordination Protocol
 
-BMAD uses slash commands to activate specialized AI agent workflows. **Always use fresh chat sessions for workflows** to avoid context hallucinations.
+### Every Agent Spawned via Task Tool MUST:
 
-### Project Initialization
-- `/bmad:bmm:workflows:workflow-init` - Initialize new project (determines level 0-4)
-- `/bmad:bmm:workflows:workflow-status` - Check current status and next steps
+**1️⃣ BEFORE Work:**
+```bash
+npx claude-flow@alpha hooks pre-task --description "[task]"
+npx claude-flow@alpha hooks session-restore --session-id "swarm-[id]"
+```
 
-### Phase 1: Analysis (Optional)
-- `/bmad:core:workflows:brainstorming` - Interactive brainstorming sessions
-- `/bmad:cis:workflows:innovation-strategy` - Identify disruption opportunities
-- `/bmad:bmm:workflows:brainstorm-project` - Project-specific brainstorming
-- `/bmad:bmm:workflows:product-brief` - Create product vision document
+**2️⃣ DURING Work:**
+```bash
+npx claude-flow@alpha hooks post-edit --file "[file]" --memory-key "swarm/[agent]/[step]"
+npx claude-flow@alpha hooks notify --message "[what was done]"
+```
 
-### Phase 2: Planning (Required)
-- `/bmad:bmm:workflows:prd` - Create Product Requirements Document (Level 2-4)
-- `/bmad:bmm:workflows:tech-spec` - Create Technical Specification (Level 0-1)
-- `/bmad:bmm:workflows:research` - Conduct market/technical/user research
+**3️⃣ AFTER Work:**
+```bash
+npx claude-flow@alpha hooks post-task --task-id "[task]"
+npx claude-flow@alpha hooks session-end --export-metrics true
+```
 
-### Phase 3: Solutioning (Level 2-4 Only)
-- `/bmad:bmm:workflows:architecture` - Make architectural decisions
-- `/bmad:bmm:workflows:create-epics-and-stories` - Transform PRD into stories
-- `/bmad:bmm:workflows:epic-tech-context` - Generate technical specifications
-- `/bmad:bmm:workflows:solutioning-gate-check` - Validate before implementation
+## 🎯 Concurrent Execution Examples
 
-### Phase 4: Implementation (Required)
-- `/bmad:bmm:workflows:sprint-planning` - Generate sprint tracking file
-- `/bmad:bmm:workflows:create-story` - Create next user story
-- `/bmad:bmm:workflows:story-context` - Assemble dynamic story context
-- `/bmad:bmm:workflows:dev-story` - Implement story with tasks/tests
-- `/bmad:bmm:workflows:code-review` - Senior developer review
-- `/bmad:bmm:workflows:story-ready` - Mark story ready (TODO → IN PROGRESS)
-- `/bmad:bmm:workflows:story-done` - Mark story complete (→ DONE)
+### ✅ CORRECT WORKFLOW: MCP Coordinates, Claude Code Executes
 
-### Post-Implementation
-- `/bmad:bmm:workflows:retrospective` - Review epic completion
-- `/bmad:bmm:workflows:correct-course` - Navigate significant changes
+```javascript
+// Step 1: MCP tools set up coordination (optional, for complex tasks)
+[Single Message - Coordination Setup]:
+  mcp__claude-flow__swarm_init { topology: "mesh", maxAgents: 6 }
+  mcp__claude-flow__agent_spawn { type: "researcher" }
+  mcp__claude-flow__agent_spawn { type: "coder" }
+  mcp__claude-flow__agent_spawn { type: "tester" }
 
-### Builder Tools
-- `/bmad:bmb:workflows:create-agent` - Build custom BMAD agents
-- `/bmad:bmb:workflows:create-workflow` - Build custom workflows
-- `/bmad:bmb:workflows:create-module` - Build complete modules
+// Step 2: Claude Code Task tool spawns ACTUAL agents that do the work
+[Single Message - Parallel Agent Execution]:
+  // Claude Code's Task tool spawns real agents concurrently
+  Task("Research agent", "Analyze API requirements and best practices. Check memory for prior decisions.", "researcher")
+  Task("Coder agent", "Implement REST endpoints with authentication. Coordinate via hooks.", "coder")
+  Task("Database agent", "Design and implement database schema. Store decisions in memory.", "code-analyzer")
+  Task("Tester agent", "Create comprehensive test suite with 90% coverage.", "tester")
+  Task("Reviewer agent", "Review code quality and security. Document findings.", "reviewer")
+  
+  // Batch ALL todos in ONE call
+  TodoWrite { todos: [
+    {id: "1", content: "Research API patterns", status: "in_progress", priority: "high"},
+    {id: "2", content: "Design database schema", status: "in_progress", priority: "high"},
+    {id: "3", content: "Implement authentication", status: "pending", priority: "high"},
+    {id: "4", content: "Build REST endpoints", status: "pending", priority: "high"},
+    {id: "5", content: "Write unit tests", status: "pending", priority: "medium"},
+    {id: "6", content: "Integration tests", status: "pending", priority: "medium"},
+    {id: "7", content: "API documentation", status: "pending", priority: "low"},
+    {id: "8", content: "Performance optimization", status: "pending", priority: "low"}
+  ]}
+  
+  // Parallel file operations
+  Bash "mkdir -p app/{src,tests,docs,config}"
+  Write "app/package.json"
+  Write "app/src/server.js"
+  Write "app/tests/server.test.js"
+  Write "app/docs/API.md"
+```
 
-### Collaboration
-- `/bmad:core:workflows:party-mode` - Multi-agent group discussions
+### ❌ WRONG (Multiple Messages):
+```javascript
+Message 1: mcp__claude-flow__swarm_init
+Message 2: Task("agent 1")
+Message 3: TodoWrite { todos: [single todo] }
+Message 4: Write "file.js"
+// This breaks parallel coordination!
+```
 
-## Architecture Principles
+## Performance Benefits
 
-### BMAD Methodology
-1. **Agent-Based Workflow Orchestration** - Specialized AI agents collaborate via defined workflows
-2. **Story-Centric Implementation** - Backlog → Drafted → Ready → In Progress → Review → Done
-3. **Just-In-Time Context Loading** - Never pre-load context; agents load dynamically when activated
-4. **Scale-Adaptive System** - Automatically adjusts complexity based on project level:
-   - **Level 0:** Single atomic change (bug fix, add endpoint) - tech-spec only
-   - **Level 1:** Small feature (2-5 story points) - tech-spec only
-   - **Level 2:** Medium feature (5-13 points) - PRD + architecture
-   - **Level 3:** Large feature/module (13-21 points) - Full methodology
-   - **Level 4:** System/platform (21+ points) - Enterprise method
-5. **Fresh Chat Per Workflow** - Always start new chat to prevent hallucinations
+- **84.8% SWE-Bench solve rate**
+- **32.3% token reduction**
+- **2.8-4.4x speed improvement**
+- **27+ neural models**
 
-### Hackathon-Specific Principles
-- **Autonomous AI Agents** - No human intervention after initial configuration
-- **Micropayment Economics** - Optimize for <$0.01 transactions
-- **Fast Settlement** - Target <2 second payment confirmation
-- **On-Chain Verification** - All payments verified via Solana blockchain
-- **Policy-Enforced Safety** - Agent behavior constraints via payment policies
+## Hooks Integration
 
-## Critical Configuration Files
+### Pre-Operation
+- Auto-assign agents by file type
+- Validate commands for safety
+- Prepare resources automatically
+- Optimize topology by complexity
+- Cache searches
 
-### BMAD Configuration
-- **Global Config:** `bmad/core/config.yaml`
-  ```yaml
-  user_name: Valik
-  communication_language: English
-  document_output_language: English
-  output_folder: '{project-root}/docs'
-  ```
-- **Module Manifest:** `bmad/_cfg/manifest.yaml` (tracks installed modules)
-- **Workflow Status:** `docs/bmm-workflow-status.yaml` (created after workflow-init)
+### Post-Operation
+- Auto-format code
+- Train neural patterns
+- Update memory
+- Analyze performance
+- Track token usage
 
-### Hackathon Resources (Read-Only Reference)
-Located in `hackathon-research/`:
-- `x402-protocol-specification.md` - Complete protocol technical specs (495 lines)
-- `hackathon-rules-and-tracks.md` - All 13 tracks, requirements, deadlines (689 lines)
-- `technical-stack-reference.md` - SDKs, APIs, code examples (1,121 lines)
-- `ecosystem-tools-reference.md` - Corbits, PayAI, x402scan, Crossmint guides
-- `market-landscape.md` - Market analysis, competitors, opportunities (1,011 lines)
-- `sponsor-technologies.md` - Visa TAP, ATXP, Switchboard, CDP, Gradient (1,456 lines)
+### Session Management
+- Generate summaries
+- Persist state
+- Track metrics
+- Restore context
+- Export workflows
 
-## Development Workflow
+## Advanced Features (v2.0.0)
 
-### Recommended Approach for This Hackathon
+- 🚀 Automatic Topology Selection
+- ⚡ Parallel Execution (2.8-4.4x speed)
+- 🧠 Neural Training
+- 📊 Bottleneck Analysis
+- 🤖 Smart Auto-Spawning
+- 🛡️ Self-Healing Workflows
+- 💾 Cross-Session Memory
+- 🔗 GitHub Integration
 
-1. **Brainstorm & Research** (Analysis Phase)
-   - Run `/bmad:cis:workflows:innovation-strategy` to identify winning opportunity
-   - Review `hackathon-research/hackathon-rules-and-tracks.md` for prize tracks
-   - Recommended target: "Best x402 Agent Application" ($10,000 prize)
+## Integration Tips
 
-2. **Initialize Project** (Planning Phase)
-   - Run `/bmad:bmm:workflows:workflow-init` to determine project level
-   - Expected level: 1-2 (small-to-medium hackathon project)
-   - Create tech-spec (Level 0-1) OR product-brief + PRD (Level 2+)
+1. Start with basic swarm init
+2. Scale agents gradually
+3. Use memory for context
+4. Monitor progress regularly
+5. Train patterns from success
+6. Enable hooks automation
+7. Use GitHub tools first
 
-3. **Design Architecture** (Solutioning Phase - if Level 2+)
-   - Run `/bmad:bmm:workflows:architecture` for key technical decisions
-   - Focus on: x402 integration, Solana deployment, AI agent framework choice
-   - Reference `technical-stack-reference.md` for SDK integration patterns
+## Support
 
-4. **Implement Stories** (Implementation Phase)
-   - Run `/bmad:bmm:workflows:sprint-planning` to track progress
-   - Iterate: create-story → story-context → dev-story → code-review → story-done
-   - Use `story-context` to dynamically load relevant docs before each story
-
-5. **Final Submission**
-   - Create 3-minute demo video
-   - Write README with architecture diagrams
-   - Deploy to Solana devnet/mainnet
-   - Submit before November 11, 2025 deadline
-
-### Working with BMAD
-
-**DO:**
-- Use fresh chat sessions for each workflow execution
-- Run `workflow-status` when unsure of next step
-- Let workflows guide you through BMAD methodology
-- Reference hackathon-research docs for x402/Solana specifics
-- Verify methods/properties exist before using (per global CLAUDE.md)
-
-**DON'T:**
-- Skip phases in the BMAD methodology
-- Pre-load large amounts of context (use just-in-time loading)
-- Reuse chat sessions across multiple workflows
-- Make assumptions about project structure - let workflow-init determine it
-
-## Prize Tracks Reference
-
-Quick reference to key prize tracks (see `hackathon-research/hackathon-rules-and-tracks.md` for full details):
-
-| Track | Prize | Focus |
-|-------|-------|-------|
-| Best x402 Agent Application | $10,000 | Most compelling x402 use case |
-| Best Corbits Project | $5,000 | Built with Corbits/Faremeter SDK |
-| Best Agent Money Protocol Hack | $5,000 | Innovative payment protocols |
-| Visa TAP Integration | $10,000 | Trusted Agent Protocol |
-| ATXP Integration | $10,000 | Multi-protocol agent transactions |
-| Switchboard Integration | $5,000 | Oracle data feeds with x402 |
-| CDP Embedded Wallets | $5,000 | Coinbase wallet infrastructure |
-| Gradient Parallax | $5,000 | Distributed AI on Solana |
-
-**Tip:** Projects can win multiple tracks simultaneously. Target 2-3 compatible tracks for maximum prize potential.
-
-## Common Pitfalls
-
-1. **Context Overload** - BMAD agents work best with fresh, focused context. Don't dump entire codebases into a single chat.
-
-2. **Skipping workflow-init** - Always initialize with workflow-init to let BMAD determine the right level and track.
-
-3. **Wrong SDK Choice** - For Solana-first hackathon project, Corbits/Faremeter is recommended over CDP SDK (which favors Base/multi-chain).
-
-4. **Ignoring x402 Requirements** - Every submission MUST integrate x402 protocol. Review `x402-protocol-specification.md` early.
-
-5. **Late Deployment** - Solana devnet/mainnet deployment required. Don't wait until last day to deploy.
-
-## Additional Resources
-
-### BMAD Documentation
-Located in `bmad/bmm/docs/`:
-- `quickstart.md` - Getting started with BMAD
-- `agents-guide.md` - Understanding specialized agents
-- `scale-adaptive-system.md` - Project level determination logic
-- `troubleshooting.md` - Common issues and solutions
-
-### External Links
-- x402 Protocol Docs: https://docs.x402.org
-- Corbits Documentation: https://docs.corbits.ai
-- Solana Developer Docs: https://docs.solana.com
-- BMAD GitHub: (refer to installation method via NPM)
+- Documentation: https://github.com/ruvnet/claude-flow
+- Issues: https://github.com/ruvnet/claude-flow/issues
+- Flow-Nexus Platform: https://flow-nexus.ruv.io (registration required for cloud features)
 
 ---
 
-**Remember:** This is a hackathon project with a November 11, 2025 deadline. Balance thoroughness with speed. Use BMAD workflows to maintain quality while moving fast.
+Remember: **Claude Flow coordinates, Claude Code creates!**
+
+# important-instruction-reminders
+Do what has been asked; nothing more, nothing less.
+NEVER create files unless they're absolutely necessary for achieving your goal.
+ALWAYS prefer editing an existing file to creating a new one.
+NEVER proactively create documentation files (*.md) or README files. Only create documentation files if explicitly requested by the User.
+Never save working files, text/mds and tests to the root folder.
