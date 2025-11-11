@@ -22,6 +22,11 @@ npm-debug.log
 .DS_Store
 Thumbs.db
 
+# Test directories (generated during development/demos)
+test-x402/
+my-x402-project/
+*-demo/
+
 # Environment
 .env
 .env.local
