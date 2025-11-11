@@ -5,7 +5,7 @@ use std::fs;
 use std::path::PathBuf;
 
 use crate::cli::InitArgs;
-use crate::config::Config;
+use crate::config::{Config, PricingConfig, SimulationMode};
 
 /// Configuration for YAML serialization (includes all fields)
 #[derive(Serialize)]
@@ -94,6 +94,9 @@ pub async fn run(_args: &InitArgs) -> Result<()> {
         port,
         solana_rpc,
         log_level,
+        pricing: PricingConfig::default(), // Story 2.2: Use default pricing
+        simulation_mode: SimulationMode::default(), // Story 2.3: Default to success mode
+        timeout_delay_ms: 5000, // Story 2.3: Default 5 second timeout
     };
 
     // Validate configuration

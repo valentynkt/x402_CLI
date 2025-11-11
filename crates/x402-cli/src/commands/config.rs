@@ -16,6 +16,7 @@ async fn show_config(args: &ConfigArgs) -> Result<()> {
         port: args.port,
         solana_rpc: args.solana_rpc.clone(),
         log_level: args.log_level.clone(),
+        pricing: None, // Story 2.2: Configurable pricing (not implemented yet)
     };
 
     // Load merged config with source tracking

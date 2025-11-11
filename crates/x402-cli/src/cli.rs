@@ -57,8 +57,11 @@ pub enum Commands {
 #[derive(Args)]
 #[command(after_help = "\
 EXAMPLES:
-  x402-dev mock --port 3402
-  x402-dev mock --pricing 0.01
+  x402-dev mock --port 3402          Start server
+  x402-dev mock --pricing 0.02       Start with custom default pricing
+  x402-dev mock stop                 Stop server
+  x402-dev mock status               Check status
+  x402-dev mock restart              Restart server
 
 SEE ALSO:
   x402-dev test      Run test suites against mock server
@@ -66,7 +69,26 @@ SEE ALSO:
   x402-dev doctor    Diagnose setup issues
 ")]
 pub struct MockArgs {
-    // Epic 2: Mock facilitator server arguments
+    /// Port for the mock server (default: 3402)
+    #[arg(long, short, default_value = "3402")]
+    pub port: u16,
+
+    /// Override default pricing amount in SOL/USDC (overrides config file)
+    #[arg(long, value_name = "AMOUNT")]
+    pub pricing: Option<f64>,
+
+    #[command(subcommand)]
+    pub command: Option<MockSubcommand>,
+}
+
+#[derive(Subcommand)]
+pub enum MockSubcommand {
+    /// Stop the running mock server
+    Stop,
+    /// Check mock server status
+    Status,
+    /// Restart the mock server
+    Restart,
 }
 
 #[derive(Args)]

@@ -20,3 +20,11 @@ directories = { workspace = true }
 semver = { workspace = true }
 colored = { workspace = true }
 dialoguer = { workspace = true }
+actix-web = { workspace = true }
+actix-cors = { workspace = true }
+actix-rt = { workspace = true }
+chrono = { workspace = true }
+uuid = { workspace = true }
+sysinfo = { workspace = true }
+nix = { workspace = true }
+fs2 = { workspace = true }

@@ -1,8 +1,24 @@
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::env;
 use std::fs;
 use std::path::PathBuf;
+
+/// Simulation mode for payment verification (Story 2.3)
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "lowercase")]
+pub enum SimulationMode {
+    Success,
+    Failure,
+    Timeout,
+}
+
+impl Default for SimulationMode {
+    fn default() -> Self {
+        SimulationMode::Success
+    }
+}
 
 /// Configuration schema for x402-dev
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -15,6 +31,15 @@ pub struct Config {
 
     #[serde(default = "default_log_level")]
     pub log_level: String,
+
+    #[serde(default)]
+    pub pricing: PricingConfig,
+
+    #[serde(default)]
+    pub simulation_mode: SimulationMode,
+
+    #[serde(default = "default_timeout_ms")]
+    pub timeout_delay_ms: u64,
 }
 
 // Default value functions for serde
@@ -30,13 +55,129 @@ fn default_log_level() -> String {
     "info".to_string()
 }
 
+fn default_timeout_ms() -> u64 {
+    5000
+}
+
 impl Default for Config {
     fn default() -> Self {
         Config {
             port: default_port(),
             solana_rpc: default_solana_rpc(),
             log_level: default_log_level(),
+            pricing: PricingConfig::default(),
+            simulation_mode: SimulationMode::default(),
+            timeout_delay_ms: default_timeout_ms(),
         }
+    }
+}
+
+/// Pricing configuration for mock server endpoints
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PricingConfig {
+    /// Default pricing for all endpoints (in SOL/USDC)
+    #[serde(default = "default_pricing_amount")]
+    pub default: f64,
+
+    /// Per-resource pricing rules (supports exact match and wildcard patterns)
+    #[serde(default)]
+    pub per_resource: HashMap<String, f64>,
+}
+
+fn default_pricing_amount() -> f64 {
+    0.01
+}
+
+impl Default for PricingConfig {
+    fn default() -> Self {
+        PricingConfig {
+            default: default_pricing_amount(),
+            per_resource: HashMap::new(),
+        }
+    }
+}
+
+impl PricingConfig {
+    /// Validate pricing configuration values
+    pub fn validate(&self) -> Result<()> {
+        // Validate default pricing
+        if self.default < 0.0 {
+            anyhow::bail!(
+                "Default pricing must be non-negative. Got: {}\nFix: Set default pricing to a non-negative value, e.g., 0.01",
+                self.default
+            );
+        }
+        if self.default > 100.0 {
+            anyhow::bail!(
+                "Default pricing must be <= 100 SOL. Got: {}\nFix: Set default pricing to a reasonable value, e.g., 0.01",
+                self.default
+            );
+        }
+
+        // Validate per-resource pricing
+        for (path, amount) in &self.per_resource {
+            if *amount < 0.0 {
+                anyhow::bail!(
+                    "Pricing for {} must be non-negative. Got: {}\nFix: Set pricing to a non-negative value",
+                    path,
+                    amount
+                );
+            }
+            if *amount > 100.0 {
+                anyhow::bail!(
+                    "Pricing for {} must be <= 100 SOL. Got: {}\nFix: Set pricing to a reasonable value",
+                    path,
+                    amount
+                );
+            }
+        }
+
+        Ok(())
+    }
+}
+
+/// Pricing matcher for route-based pricing
+pub struct PricingMatcher {
+    config: PricingConfig,
+}
+
+impl PricingMatcher {
+    /// Create a new pricing matcher
+    pub fn new(config: PricingConfig) -> Self {
+        PricingMatcher { config }
+    }
+
+    /// Get the price for a given request path
+    ///
+    /// Priority order:
+    /// 1. Exact match (e.g., "/api/data" matches "/api/data")
+    /// 2. Prefix match with wildcard (e.g., "/api/*" matches "/api/users")
+    /// 3. Default pricing
+    pub fn get_price_for_path(&self, path: &str) -> f64 {
+        // Priority 1: Exact match
+        if let Some(&amount) = self.config.per_resource.get(path) {
+            return amount;
+        }
+
+        // Priority 2: Prefix match (wildcard patterns)
+        let mut matches: Vec<(&str, f64)> = Vec::new();
+        for (pattern, &amount) in &self.config.per_resource {
+            if pattern.ends_with("/*") {
+                let prefix = &pattern[..pattern.len() - 2];
+                if path.starts_with(prefix) {
+                    matches.push((prefix, amount));
+                }
+            }
+        }
+
+        // If multiple wildcards match, use the longest (most specific) prefix
+        if !matches.is_empty() {
+            matches.sort_by_key(|(prefix, _)| std::cmp::Reverse(prefix.len()));
+            return matches[0].1;
+        }
+
+        // Priority 3: Default pricing
+        self.config.default
     }
 }
 
@@ -46,6 +187,9 @@ impl Config {
         self.port = other.port;
         self.solana_rpc = other.solana_rpc.clone();
         self.log_level = other.log_level.clone();
+        self.pricing = other.pricing.clone();
+        self.simulation_mode = other.simulation_mode;
+        self.timeout_delay_ms = other.timeout_delay_ms;
     }
 
     /// Validate configuration values
@@ -72,6 +216,18 @@ impl Config {
             anyhow::bail!(
                 "Invalid log level: {}. Must be one of: error, warn, info, debug, trace.\nFix: Set log_level to one of the valid values, e.g., info",
                 self.log_level
+            );
+        }
+
+        // Validate pricing configuration
+        self.pricing.validate()?;
+
+        // Validate timeout delay (100ms to 60s)
+        if self.timeout_delay_ms < 100 || self.timeout_delay_ms > 60000 {
+            anyhow::bail!(
+                "Invalid timeout delay: {} ms. Must be between 100ms and 60000ms (1 minute).\n\
+                Fix: Set timeout_delay_ms to a reasonable value between 100 and 60000",
+                self.timeout_delay_ms
             );
         }
 
@@ -135,6 +291,7 @@ pub struct CliOverrides {
     pub port: Option<u16>,
     pub solana_rpc: Option<String>,
     pub log_level: Option<String>,
+    pub pricing: Option<f64>,
 }
 
 impl Config {
@@ -167,6 +324,9 @@ impl Config {
         }
         if let Some(ref level) = cli.log_level {
             self.log_level = level.clone();
+        }
+        if let Some(pricing) = cli.pricing {
+            self.pricing.default = pricing;
         }
     }
 }
@@ -207,6 +367,7 @@ pub struct ConfigWithSources {
     pub port_source: String,
     pub solana_rpc_source: String,
     pub log_level_source: String,
+    pub pricing_source: String,
 }
 
 /// Load merged configuration with source tracking
@@ -219,6 +380,7 @@ pub fn load_merged_config_with_sources(
     let mut port_source = "default".to_string();
     let mut solana_rpc_source = "default".to_string();
     let mut log_level_source = "default".to_string();
+    let mut pricing_source = "default".to_string();
 
     // Global config
     if let Some(global) = load_global_config()? {
@@ -282,6 +444,10 @@ pub fn load_merged_config_with_sources(
             config.log_level = level.clone();
             log_level_source = "CLI flag (--log-level)".to_string();
         }
+        if let Some(pricing) = cli.pricing {
+            config.pricing.default = pricing;
+            pricing_source = "CLI flag (--pricing)".to_string();
+        }
     }
 
     // Validate
@@ -292,5 +458,138 @@ pub fn load_merged_config_with_sources(
         port_source,
         solana_rpc_source,
         log_level_source,
+        pricing_source,
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_pricing_config_validation() {
+        // Valid config
+        let config = PricingConfig {
+            default: 0.01,
+            per_resource: HashMap::new(),
+        };
+        assert!(config.validate().is_ok());
+
+        // Invalid negative default
+        let config = PricingConfig {
+            default: -0.01,
+            per_resource: HashMap::new(),
+        };
+        assert!(config.validate().is_err());
+
+        // Invalid too high default
+        let config = PricingConfig {
+            default: 101.0,
+            per_resource: HashMap::new(),
+        };
+        assert!(config.validate().is_err());
+
+        // Invalid per-resource pricing
+        let mut per_resource = HashMap::new();
+        per_resource.insert("/api/data".to_string(), -0.05);
+        let config = PricingConfig {
+            default: 0.01,
+            per_resource,
+        };
+        assert!(config.validate().is_err());
+    }
+
+    #[test]
+    fn test_pricing_matcher_exact_match() {
+        let mut per_resource = HashMap::new();
+        per_resource.insert("/api/data".to_string(), 0.05);
+        per_resource.insert("/api/premium".to_string(), 0.10);
+
+        let config = PricingConfig {
+            default: 0.01,
+            per_resource,
+        };
+        let matcher = PricingMatcher::new(config);
+
+        // Exact matches
+        assert_eq!(matcher.get_price_for_path("/api/data"), 0.05);
+        assert_eq!(matcher.get_price_for_path("/api/premium"), 0.10);
+
+        // No match - should use default
+        assert_eq!(matcher.get_price_for_path("/random"), 0.01);
+    }
+
+    #[test]
+    fn test_pricing_matcher_prefix_match() {
+        let mut per_resource = HashMap::new();
+        per_resource.insert("/api/admin/*".to_string(), 0.20);
+        per_resource.insert("/api/*".to_string(), 0.03);
+
+        let config = PricingConfig {
+            default: 0.01,
+            per_resource,
+        };
+        let matcher = PricingMatcher::new(config);
+
+        // Prefix matches - should use longest matching prefix
+        assert_eq!(matcher.get_price_for_path("/api/admin/users"), 0.20);
+        assert_eq!(matcher.get_price_for_path("/api/admin/settings"), 0.20);
+        assert_eq!(matcher.get_price_for_path("/api/users"), 0.03);
+        assert_eq!(matcher.get_price_for_path("/api/posts"), 0.03);
+
+        // No match
+        assert_eq!(matcher.get_price_for_path("/public/status"), 0.01);
+    }
+
+    #[test]
+    fn test_pricing_matcher_priority() {
+        let mut per_resource = HashMap::new();
+        per_resource.insert("/api/*".to_string(), 0.03);
+        per_resource.insert("/api/data".to_string(), 0.05);
+
+        let config = PricingConfig {
+            default: 0.01,
+            per_resource,
+        };
+        let matcher = PricingMatcher::new(config);
+
+        // Exact match should take priority over prefix
+        assert_eq!(matcher.get_price_for_path("/api/data"), 0.05);
+
+        // Prefix match for other paths
+        assert_eq!(matcher.get_price_for_path("/api/users"), 0.03);
+
+        // Default for no match
+        assert_eq!(matcher.get_price_for_path("/other"), 0.01);
+    }
+
+    #[test]
+    fn test_pricing_matcher_default_fallback() {
+        let config = PricingConfig::default();
+        let matcher = PricingMatcher::new(config);
+
+        // All paths should return default
+        assert_eq!(matcher.get_price_for_path("/any/path"), 0.01);
+        assert_eq!(matcher.get_price_for_path("/api/data"), 0.01);
+        assert_eq!(matcher.get_price_for_path("/"), 0.01);
+    }
+
+    #[test]
+    fn test_pricing_matcher_longest_prefix() {
+        let mut per_resource = HashMap::new();
+        per_resource.insert("/api/*".to_string(), 0.03);
+        per_resource.insert("/api/admin/*".to_string(), 0.20);
+        per_resource.insert("/api/admin/super/*".to_string(), 0.50);
+
+        let config = PricingConfig {
+            default: 0.01,
+            per_resource,
+        };
+        let matcher = PricingMatcher::new(config);
+
+        // Should use longest matching prefix
+        assert_eq!(matcher.get_price_for_path("/api/users"), 0.03);
+        assert_eq!(matcher.get_price_for_path("/api/admin/users"), 0.20);
+        assert_eq!(matcher.get_price_for_path("/api/admin/super/users"), 0.50);
+    }
 }
