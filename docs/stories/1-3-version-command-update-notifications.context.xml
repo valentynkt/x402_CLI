@@ -1,0 +1,299 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>1</epicId>
+    <storyId>3</storyId>
+    <title>Version Command & Update Notifications</title>
+    <status>ready-for-dev</status>
+    <generatedAt>2025-11-10</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/1-3-version-command-update-notifications.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a developer</asA>
+    <iWant>to check x402-dev version information</iWant>
+    <soThat>I know which version I'm running and if updates are available</soThat>
+    <tasks>
+      - Task 1: Create version command module (AC: #1)
+        - Create `crates/x402-cli/src/commands/mod.rs` to organize command modules
+        - Create `crates/x402-cli/src/commands/version.rs` file
+        - Implement `run()` function returning `anyhow::Result<()>`
+        - Display version using `env!("CARGO_PKG_VERSION")` macro
+        - Display platform using `std::env::consts::OS` and `std::env::consts::ARCH`
+        - Display Rust version (consider using `env!("CARGO_PKG_RUST_VERSION")` or rustc_version crate)
+
+      - Task 2: Implement weekly update check (AC: #2, #3, #4)
+        - Add `reqwest = { workspace = true }` to `crates/x402-cli/Cargo.toml`
+        - Add `serde = { workspace = true }` and `serde_json = { workspace = true }`
+        - Add `directories = "5.0"` to workspace dependencies for config directory
+        - Create update check logic in version.rs
+        - Fetch latest version from crates.io API: `https://crates.io/api/v1/crates/x402-dev`
+        - Parse response to extract `crate.max_version` field
+        - Compare with current version using version comparison logic
+        - Store last check timestamp in `~/.x402dev/update-check.json`
+        - Only check weekly (604800 seconds = 7 days)
+        - Implement `--no-update-check` flag support via VersionArgs struct
+
+      - Task 3: Handle update check errors gracefully (AC: #2)
+        - Wrap HTTP request in Result pattern
+        - If network unavailable: Skip update check silently (no error display)
+        - If crates.io returns error: Skip update check silently
+        - If JSON parsing fails: Log debug info but don't fail command
+        - Always display version info even if update check fails
+        - Use anyhow::Context to add error context for debugging
+
+      - Task 4: Wire version command to CLI (AC: #1)
+        - Update `VersionArgs` struct in `cli.rs` to include `no_update_check` flag
+        - Add `#[arg(long)]` attribute for `--no-update-check` flag
+        - Update match arm in `main.rs` to call `version::run(args).await?`
+        - Add `mod commands;` declaration to main.rs
+        - Import version module: `use commands::version;`
+
+      - Task 5: Test version command (AC: #1, #2, #3, #4)
+        - Run `cargo build --release`
+        - Test `./target/release/x402-dev version` displays version, platform, Rust version
+        - Verify update check runs (first time, no cache)
+        - Test `./target/release/x402-dev version --no-update-check` skips update check
+        - Test second run within 7 days uses cached result (no HTTP request)
+        - Test offline scenario (disconnect network) - should still display version
+        - Verify cache file created at `~/.x402dev/update-check.json`
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    1. **Given** the CLI is installed
+       **When** I run `x402-dev version`
+       **Then** it displays x402-dev version, Rust version, and platform
+
+    2. **And** it checks crates.io for newer versions (weekly)
+
+    3. **And** it displays "Update available" message if newer version exists
+
+    4. **And** it supports `--no-update-check` flag to disable check
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>x402-dev Product Requirements Document</title>
+        <section>Executive Summary</section>
+        <snippet>x402-dev is the x402 Protocol Standard Toolkit for Solana AI agent developers. Reduces development cycles from weeks to days by providing testing, validation, and security capabilities. Target: Track 4 (Best x402 Dev Tool) - $10,000 prize.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>x402-dev Architecture Document</title>
+        <section>Technology Stack Details</section>
+        <snippet>Pure Rust CLI toolkit. Dependencies: clap 4.5, tokio 1.48 (rt-multi-thread), anyhow 1.0 for error handling, reqwest 0.12 for HTTP, serde/serde_json for serialization. Binary target: 2-3MB optimized for size.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture - Build Configuration</title>
+        <section>Build Configuration</section>
+        <snippet>Release profile: opt-level="z", lto="fat", strip="symbols", panic="abort" for minimum binary size (~2-3MB).</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epic 1: Foundation & CLI Infrastructure</title>
+        <section>Story 1.3: Version Command & Update Notifications</section>
+        <snippet>Implements version display with x402-dev version, Rust version, platform info. Checks crates.io weekly for updates. Supports --no-update-check flag. Uses env!("CARGO_PKG_VERSION"), std::env::consts for platform detection.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Complete Project Structure</title>
+        <section>Project Structure</section>
+        <snippet>Commands organized in crates/x402-cli/src/commands/ directory. Each command gets own module file (e.g., version.rs). Module declarations in commands/mod.rs. Main.rs imports and routes to command modules.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>crates/x402-cli/src/cli.rs</path>
+        <kind>CLI definition</kind>
+        <symbol>VersionArgs</symbol>
+        <lines>91-94</lines>
+        <reason>Existing VersionArgs struct to be extended with --no-update-check flag. Uses Clap derive macros #[derive(Args)].</reason>
+      </artifact>
+      <artifact>
+        <path>crates/x402-cli/src/cli.rs</path>
+        <kind>CLI definition</kind>
+        <symbol>Commands</symbol>
+        <lines>10-41</lines>
+        <reason>Commands enum defining all CLI subcommands. Version command already defined at line 40. Shows pattern for command integration.</reason>
+      </artifact>
+      <artifact>
+        <path>crates/x402-cli/src/main.rs</path>
+        <kind>Entry point</kind>
+        <symbol>main</symbol>
+        <lines>8-46</lines>
+        <reason>Main function with command routing. Version command placeholder at lines 40-42. Uses async tokio runtime with anyhow::Result pattern. Need to update to call version::run().</reason>
+      </artifact>
+      <artifact>
+        <path>Cargo.toml</path>
+        <kind>Workspace manifest</kind>
+        <symbol>workspace.dependencies</symbol>
+        <lines>9-17</lines>
+        <reason>Workspace dependencies. clap, anyhow, tokio already defined. Need to add: reqwest, serde, serde_json, directories to workspace.dependencies.</reason>
+      </artifact>
+      <artifact>
+        <path>crates/x402-cli/Cargo.toml</path>
+        <kind>Binary crate manifest</kind>
+        <symbol>dependencies</symbol>
+        <lines>10-14</lines>
+        <reason>Binary crate dependencies. Uses { workspace = true } pattern for shared dependencies. Will add reqwest, serde, serde_json, directories.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <rust>
+        <existing>
+          <clap>4.5 (features: derive, color, suggestions, env, wrap_help)</clap>
+          <anyhow>1.0</anyhow>
+          <tokio>1.48 (features: rt-multi-thread, macros)</tokio>
+        </existing>
+        <to_add>
+          <reqwest>0.12 (features: json) - HTTP client for crates.io API</reqwest>
+          <serde>1.0 (features: derive) - Serialization framework</serde>
+          <serde_json>1.0 - JSON parsing for API responses and cache</serde_json>
+          <directories>5.0 - Platform-specific config directories (~/.x402dev/)</directories>
+        </to_add>
+      </rust>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <architecture>
+      <constraint type="ADR-001">Pure Rust KISS architecture - No TypeScript/npm dependencies. All version logic must be implemented in Rust.</constraint>
+      <constraint type="ADR-002">Tokio multi-thread runtime enabled - Full async capabilities available for reqwest HTTP calls.</constraint>
+      <constraint type="error-handling">Use anyhow::Result&lt;()&gt; for all command functions. Ergonomic error propagation with ? operator and .context() for debugging.</constraint>
+      <constraint type="graceful-degradation">Update check is optional - NEVER fail version command due to network errors. Display version info even if update check fails.</constraint>
+    </architecture>
+    <module-organization>
+      <constraint type="structure">Command implementations go in crates/x402-cli/src/commands/ subdirectory. Each command gets its own module file (version.rs).</constraint>
+      <constraint type="module-pattern">commands/mod.rs declares all command modules. main.rs imports via 'use commands::version;' and routes commands.</constraint>
+      <constraint type="args-pattern">Update VersionArgs in cli.rs using Clap derive macros. Add fields with #[arg(long)] attribute for flags.</constraint>
+    </module-organization>
+    <implementation>
+      <constraint type="async-runtime">Commands can use async/await with tokio runtime. Version command function signature: pub async fn run(args: &amp;crate::cli::VersionArgs) -> Result&lt;()&gt;</constraint>
+      <constraint type="version-macro">Display version using env!("CARGO_PKG_VERSION") compile-time macro from Cargo.toml metadata.</constraint>
+      <constraint type="platform-detection">Use std::env::consts::OS and std::env::consts::ARCH for platform info (no external crates).</constraint>
+      <constraint type="cache-location">Store update check cache at ~/.x402dev/update-check.json using directories crate for cross-platform paths.</constraint>
+      <constraint type="check-frequency">Weekly update checks only (604800 seconds = 7 days). Compare timestamp in cache file.</constraint>
+    </implementation>
+    <error-handling>
+      <constraint type="network-errors">Wrap HTTP requests in Result. If network unavailable or crates.io errors, skip update check silently - no error display to user.</constraint>
+      <constraint type="json-parsing">If JSON parsing fails, log debug info but don't fail command. Always display version info regardless of update check status.</constraint>
+      <constraint type="context-propagation">Use anyhow::Context trait to add error context for debugging without surfacing errors to users.</constraint>
+    </error-handling>
+    <binary-size>
+      <constraint type="dependency-budget">Binary size target: 2-3MB. Adding reqwest/serde increases size but within acceptable limits (current 509KB has headroom).</constraint>
+    </binary-size>
+  </constraints>
+  <interfaces>
+    <cli-integration>
+      <interface>
+        <name>VersionArgs (to be extended)</name>
+        <kind>Clap Args struct</kind>
+        <signature>#[derive(Args)]
+pub struct VersionArgs {
+    /// Skip checking for updates
+    #[arg(long)]
+    pub no_update_check: bool,
+}</signature>
+        <path>crates/x402-cli/src/cli.rs</path>
+        <usage>Modify existing empty VersionArgs struct at lines 91-94 to add no_update_check field with #[arg(long)] attribute.</usage>
+      </interface>
+      <interface>
+        <name>Commands::Version match arm</name>
+        <kind>Command routing</kind>
+        <signature>Commands::Version(args) => {
+    version::run(args).await?
+}</signature>
+        <path>crates/x402-cli/src/main.rs</path>
+        <usage>Replace placeholder at lines 40-42 with async call to version::run(). Requires 'mod commands;' and 'use commands::version;' imports.</usage>
+      </interface>
+    </cli-integration>
+    <crates-io-api>
+      <interface>
+        <name>Crates.io API - Get Crate Info</name>
+        <kind>REST endpoint</kind>
+        <signature>GET https://crates.io/api/v1/crates/x402-dev
+Response: {
+  "crate": {
+    "name": "x402-dev",
+    "max_version": "0.1.0"
+  }
+}</signature>
+        <path>External API</path>
+        <usage>Fetch latest version using reqwest. Parse JSON response to extract crate.max_version field. Compare with env!("CARGO_PKG_VERSION").</usage>
+      </interface>
+    </crates-io-api>
+    <cache-file>
+      <interface>
+        <name>Update Check Cache File</name>
+        <kind>JSON file</kind>
+        <signature>{
+  "last_check": 1699564800,
+  "latest_version": "0.1.0"
+}</signature>
+        <path>~/.x402dev/update-check.json</path>
+        <usage>Store Unix timestamp of last check and latest version found. Read on startup to determine if 7 days elapsed. Create directory if doesn't exist using directories crate.</usage>
+      </interface>
+    </cache-file>
+    <version-command-module>
+      <interface>
+        <name>version::run</name>
+        <kind>Async command function</kind>
+        <signature>pub async fn run(args: &amp;crate::cli::VersionArgs) -> anyhow::Result&lt;()&gt; {
+    // Display version, platform, Rust version
+    // Optionally check for updates if !args.no_update_check
+    // Return Ok(()) or propagate errors
+}</signature>
+        <path>crates/x402-cli/src/commands/version.rs (to be created)</path>
+        <usage>Main entry point for version command. Called from main.rs match arm. Returns anyhow::Result for error propagation.</usage>
+      </interface>
+    </version-command-module>
+  </interfaces>
+  <tests>
+    <standards>
+This story follows manual CLI testing approach (no unit tests). Testing focuses on command-level integration via manual execution. Test each acceptance criterion thoroughly with various scenarios including success cases, error cases, and edge cases. Verify command output format, flag behavior, and graceful error handling. For this story specifically: test version display accuracy, update check functionality with/without network, cache behavior across multiple runs, and --no-update-check flag operation.
+    </standards>
+    <locations>
+      <location>Manual execution from target/release/x402-dev binary</location>
+      <location>Test cache file location: ~/.x402dev/update-check.json</location>
+      <location>No automated test files for this story (command-level testing only)</location>
+    </locations>
+    <ideas>
+      <test id="AC-1">
+        <criterion>AC #1: Version display</criterion>
+        <description>Run `x402-dev version` and verify output shows x402-dev version (from Cargo.toml), platform (OS-ARCH format), and Rust version. Validate format is clean and readable.</description>
+      </test>
+      <test id="AC-2">
+        <criterion>AC #2: Weekly update check</criterion>
+        <description>Test update check runs on first execution (no cache). Verify HTTP request to crates.io API. Check cache file created at ~/.x402dev/update-check.json with timestamp and version. Run second time within 7 days - should use cache (no HTTP request).</description>
+      </test>
+      <test id="AC-3">
+        <criterion>AC #3: Update available message</criterion>
+        <description>If newer version exists on crates.io (max_version > current version), verify "Update available" message displays with version comparison. Test version comparison logic handles semantic versioning correctly.</description>
+      </test>
+      <test id="AC-4">
+        <criterion>AC #4: --no-update-check flag</criterion>
+        <description>Run `x402-dev version --no-update-check` and verify no HTTP request made, no cache file access, but version info still displays. Useful for CI/CD or offline scenarios.</description>
+      </test>
+      <test id="error-network">
+        <criterion>Error Handling: Network unavailable</criterion>
+        <description>Disconnect network and run `x402-dev version`. Should display version info successfully without error messages. Update check silently skipped. No crash or visible error to user.</description>
+      </test>
+      <test id="error-crates-io">
+        <criterion>Error Handling: Crates.io API error</criterion>
+        <description>Simulate crates.io API returning 500/404 error. Version command should complete successfully, display version info, skip update notification. No error surfaced to user.</description>
+      </test>
+      <test id="cache-expiry">
+        <criterion>Cache Behavior: 7-day expiry</criterion>
+        <description>Test cache timestamp logic. Manually edit cache file to set last_check to 8 days ago (current_time - 691200 seconds). Run version command - should perform new update check and update cache timestamp.</description>
+      </test>
+      <test id="build-verification">
+        <criterion>Build Integration</criterion>
+        <description>Run `cargo build --release` and verify compilation succeeds with new reqwest/serde dependencies. Check binary size stays within 2-3MB target. Verify no compilation warnings.</description>
+      </test>
+    </ideas>
+  </tests>
+</story-context>

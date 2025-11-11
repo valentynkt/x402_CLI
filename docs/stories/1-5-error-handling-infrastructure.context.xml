@@ -1,0 +1,193 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>1</epicId>
+    <storyId>1.5</storyId>
+    <title>error-handling-infrastructure</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-11</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/1-5-error-handling-infrastructure.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a developer</asA>
+    <iWant>clear, actionable error messages</iWant>
+    <soThat>I can quickly resolve issues without frustration</soThat>
+    <tasks>
+      - Task 1: Define error type hierarchy (AC: #1-4)
+      - Task 2: Implement colored error formatting (AC: #1-2)
+      - Task 3: Add documentation links to errors (AC: #3)
+      - Task 4: Implement exit code mapping (AC: #4)
+      - Task 5: Add verbose and debug logging (AC: #5-6)
+      - Task 6: Create error utility functions
+      - Task 7: Update existing commands to use new error system (AC: #1-6)
+      - Task 8: Test error handling system (AC: #1-6)
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    1. Error messages display in red color
+    2. Suggestions display in yellow color
+    3. Documentation links included when available
+    4. Appropriate exit codes (1=failure, 2=config error, 3=network error)
+    5. --verbose flag shows detailed logs
+    6. --debug flag shows stack traces
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epic 1: Foundation &amp; CLI Infrastructure</title>
+        <section>Story 1.5: Error Handling Infrastructure (lines 298-332)</section>
+        <snippet>As a developer, I want clear, actionable error messages, so that I can quickly resolve issues without frustration. Error infrastructure should show colored messages (red errors, yellow suggestions), include documentation links, use appropriate exit codes, and support --verbose and --debug flags.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document</title>
+        <section>Decision Summary - Error Handling (line 52)</section>
+        <snippet>Error Handling decision: anyhow 1.0 for ergonomic error propagation with context. Build custom CliError wrapper for user-facing formatting.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document</title>
+        <section>Technology Stack Details (lines 67-95)</section>
+        <snippet>Workspace dependencies include anyhow = "1.0" for error handling. Need to add colored = "2.1" for terminal color formatting.</snippet>
+      </doc>
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>Executive Summary</section>
+        <snippet>x402-dev is a pure Rust CLI toolkit for x402 protocol development. Target: 2-3MB binary size, optimize for developer experience with clear error messages and helpful guidance.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>crates/x402-cli/src/main.rs</path>
+        <kind>entry-point</kind>
+        <symbol>main</symbol>
+        <lines>1-53</lines>
+        <reason>Main entry point that routes commands. Currently returns anyhow::Result - needs to be updated to handle CliError and use std::process::exit with appropriate exit codes.</reason>
+      </artifact>
+      <artifact>
+        <path>crates/x402-cli/src/cli.rs</path>
+        <kind>cli-definition</kind>
+        <symbol>Cli, Commands</symbol>
+        <lines>1-124</lines>
+        <reason>CLI structure using Clap derive macros. Needs to add global --verbose and --debug flags to Cli struct for error verbosity control.</reason>
+      </artifact>
+      <artifact>
+        <path>crates/x402-cli/src/config.rs</path>
+        <kind>module</kind>
+        <symbol>Config</symbol>
+        <lines>all</lines>
+        <reason>Configuration module that uses anyhow::Context for error messages. Needs migration to use CliError::Config variant for consistent error formatting.</reason>
+      </artifact>
+      <artifact>
+        <path>crates/x402-cli/src/commands/version.rs</path>
+        <kind>command</kind>
+        <symbol>run</symbol>
+        <lines>all</lines>
+        <reason>Version command implementation. Currently uses anyhow errors, needs to migrate to CliError::Network for update check failures.</reason>
+      </artifact>
+      <artifact>
+        <path>crates/x402-cli/src/commands/config.rs</path>
+        <kind>command</kind>
+        <symbol>run</symbol>
+        <lines>all</lines>
+        <reason>Config command implementation. Uses anyhow errors, needs to migrate to CliError for validation failures and config errors.</reason>
+      </artifact>
+      <artifact>
+        <path>Cargo.toml</path>
+        <kind>manifest</kind>
+        <symbol>workspace.dependencies</symbol>
+        <lines>9-33</lines>
+        <reason>Workspace dependencies. Contains anyhow = "1.0" (already available). Need to add colored = "2.1" for terminal color formatting.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <rust>
+        <dependency name="anyhow" version="1.0" status="available">Ergonomic error handling - already in workspace</dependency>
+        <dependency name="clap" version="4.5" status="available">CLI framework with derive macros - already in workspace</dependency>
+        <dependency name="colored" version="2.1" status="needed">Terminal color formatting - needs to be added to workspace.dependencies</dependency>
+        <dependency name="tokio" version="1.48" status="available">Async runtime - already in workspace</dependency>
+        <dependency name="serde" version="1.0" status="available">Serialization - already in workspace</dependency>
+      </rust>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    - Pure Rust Implementation (ADR-001): Use colored crate for terminal colors, not ANSI escape codes
+    - Build on anyhow::Result pattern: Wrap anyhow errors with CliError for user-facing display
+    - User Experience: Never show raw Rust stack traces in normal mode (only with --debug flag)
+    - Exit Codes: Follow POSIX conventions (0=success, 1=general, 2=config, 3=network)
+    - Error Context: Always include what operation was attempted, not just technical error
+    - Suggestions Required: Config and Network errors must include actionable suggestions
+    - Documentation Links: Link to https://docs.x402-dev.com/errors/&lt;code&gt; (placeholder for hackathon)
+    - Binary Size: Target 2-3MB total, colored crate adds ~30-50KB (acceptable)
+    - Backward Compatibility: Commands return anyhow::Result, convert to CliError in main.rs
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>CliError</name>
+      <kind>enum</kind>
+      <signature>pub enum CliError { Config { message: String, suggestion: Option&lt;String&gt;, code: &amp;'static str }, Network { ... }, Validation { ... }, Io { message: String, source: std::io::Error }, Other { message: String } }</signature>
+      <path>crates/x402-cli/src/errors.rs (NEW)</path>
+    </interface>
+    <interface>
+      <name>CliError::exit_code</name>
+      <kind>method</kind>
+      <signature>pub fn exit_code(&amp;self) -&gt; i32</signature>
+      <path>crates/x402-cli/src/errors.rs (NEW)</path>
+    </interface>
+    <interface>
+      <name>CliError::docs_link</name>
+      <kind>method</kind>
+      <signature>pub fn docs_link(&amp;self) -&gt; Option&lt;String&gt;</signature>
+      <path>crates/x402-cli/src/errors.rs (NEW)</path>
+    </interface>
+    <interface>
+      <name>print_error</name>
+      <kind>function</kind>
+      <signature>pub fn print_error(error: &amp;CliError, verbose: bool, debug: bool)</signature>
+      <path>crates/x402-cli/src/errors.rs (NEW)</path>
+    </interface>
+    <interface>
+      <name>Commands::Version::run</name>
+      <kind>command-handler</kind>
+      <signature>pub async fn run(args: &amp;VersionArgs) -&gt; anyhow::Result&lt;()&gt;</signature>
+      <path>crates/x402-cli/src/commands/version.rs</path>
+    </interface>
+    <interface>
+      <name>Commands::Config::run</name>
+      <kind>command-handler</kind>
+      <signature>pub async fn run(args: &amp;ConfigArgs) -&gt; anyhow::Result&lt;()&gt;</signature>
+      <path>crates/x402-cli/src/commands/config.rs</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Testing approach: Manual CLI integration testing, no unit tests. Each error type should be triggered via CLI commands and verified for: (1) colored output (red errors, yellow suggestions), (2) correct exit codes, (3) documentation links, (4) --verbose shows detailed context, (5) --debug shows full stack traces. Use real CLI invocations to test error paths.
+    </standards>
+    <locations>
+      - Manual testing via terminal: cargo run -- &lt;command&gt; &lt;args&gt;
+      - Test invalid configs: .x402dev.yaml with bad values
+      - Test network errors: version --no-update-check (simulate offline)
+      - Test validation errors: config commands with invalid inputs
+      - Verify exit codes: echo $? after each error test
+    </locations>
+    <ideas>
+      - AC #1: Trigger config error (invalid port), verify red error message displayed
+      - AC #2: Verify yellow suggestion appears after error message
+      - AC #3: Check documentation link included in output (https://docs.x402-dev.com/errors/...)
+      - AC #4: Test exit codes - ConfigError=2, NetworkError=3, ValidationError=1
+      - AC #5: Run command with --verbose, verify detailed logs shown
+      - AC #6: Run command with --debug, verify stack trace shown
+      - Integration: Update version command, test network error formatting
+      - Integration: Update config command, test validation error formatting
+      - Regression: Verify existing commands still work with CliError wrapper
+    </ideas>
+  </tests>
+</story-context>

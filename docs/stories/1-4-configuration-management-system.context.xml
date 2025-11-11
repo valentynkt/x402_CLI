@@ -1,0 +1,198 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>1</epicId>
+    <storyId>1.4</storyId>
+    <title>Configuration Management System</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-11</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/1-4-configuration-management-system.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>multi-tier configuration support</iWant>
+    <soThat>I can customize x402-dev behavior via CLI flags, env vars, or config files</soThat>
+    <tasks>
+      - Task 1: Define configuration schema and defaults (ConfigSchema struct, default values, priority order documentation)
+      - Task 2: Implement config file discovery and parsing (add serde_yaml, create config module, implement load_global_config and load_project_config, merge with priority)
+      - Task 3: Implement environment variable overrides (X402_DEV_PORT, X402_DEV_SOLANA_RPC, X402_DEV_LOG_LEVEL, merge with priority)
+      - Task 4: Implement CLI flag overrides (add global CLI flags, merge with highest priority)
+      - Task 5: Add config validation and error handling (port range, URL format, log level, clear error messages)
+      - Task 6: Create config show command (create commands/config.rs, display merged config with sources)
+      - Task 7: Test configuration system (all priority levels, validation, error messages)
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    1. CLI flags override environment variables
+    2. Environment variables override project config (.x402dev.yaml)
+    3. Project config overrides global config (~/.x402dev/config.yaml)
+    4. Global config overrides built-in defaults
+    5. Invalid config shows clear error with fix suggestion
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>x402-dev Architecture Document</title>
+        <section>Decision Summary (lines 46-60)</section>
+        <snippet>Configuration decision: serde_yaml + directories for multi-tier config (CLI > env > file > defaults). Pure Rust implementation per ADR-001.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>x402-dev Architecture Document</title>
+        <section>Technology Stack Details (lines 67-95)</section>
+        <snippet>Dependency versions: serde_yaml = "0.9", directories = "5.0", serde = "1.0". Configuration priority: CLI flags > env vars > .x402dev.yaml > ~/.x402dev/config.yaml > defaults.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>x402-dev Architecture Document</title>
+        <section>ADR-001 Pure Rust KISS Architecture (lines 546-577)</section>
+        <snippet>Architecture decision to use pure Rust implementation. MUST use serde_yaml for YAML parsing, NOT cosmiconfig/js-yaml (TypeScript). Single language, minimal dependencies, compiled binary distribution.</snippet>
+      </doc>
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>FR-7: Configuration (lines 1190-1215)</section>
+        <snippet>Multi-tier configuration requirement with priority order: CLI > ENV > project config > global config > defaults. Environment variable prefix: X402_DEV_*. Config locations: .x402dev.yaml (project), ~/.x402dev/config.yaml (global).</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epic Breakdown</title>
+        <section>Story 1.4: Configuration Management System (lines 265-296)</section>
+        <snippet>Story specification with acceptance criteria. NOTE: Technical notes mention TypeScript tools (cosmiconfig, js-yaml) which are OUTDATED - architecture document supersedes with Pure Rust implementation using serde_yaml.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/1-3-version-command-update-notifications.md</path>
+        <title>Story 1.3 (Previous Story)</title>
+        <section>Dev Agent Record - Completion Notes (lines 259-287)</section>
+        <snippet>Established patterns: directories crate for ~/.x402dev/ path, serde for serialization, command module structure (commands/version.rs), anyhow error handling, workspace dependencies pattern ({ workspace = true }).</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>crates/x402-cli/src/main.rs</path>
+        <kind>entry-point</kind>
+        <symbol>main</symbol>
+        <lines>10-48</lines>
+        <reason>Entry point with tokio async runtime and command routing. Pattern for adding config command: match Commands::Config(args) => config::run(&args).await?</reason>
+      </artifact>
+      <artifact>
+        <path>crates/x402-cli/src/cli.rs</path>
+        <kind>cli-definition</kind>
+        <symbol>Commands, VersionArgs</symbol>
+        <lines>3-97</lines>
+        <reason>Clap-based CLI definition. VersionArgs (lines 92-96) shows pattern for Args structs with CLI flags. Need to add ConfigArgs enum with Config subcommand (show).</reason>
+      </artifact>
+      <artifact>
+        <path>crates/x402-cli/src/commands/mod.rs</path>
+        <kind>module-declaration</kind>
+        <symbol>pub mod version</symbol>
+        <lines>1</lines>
+        <reason>Command module declarations. Need to add: pub mod config; for new config command.</reason>
+      </artifact>
+      <artifact>
+        <path>crates/x402-cli/src/commands/version.rs</path>
+        <kind>command-implementation</kind>
+        <symbol>run, dirs::home_dir, check_for_updates, UpdateCache</symbol>
+        <lines>1-158</lines>
+        <reason>Complete command implementation example. Directory discovery pattern (lines 130-144) can be reused for ~/.x402dev/config.yaml. Serialization pattern with serde (lines 11-26). Error handling with anyhow::Result and Context.</reason>
+      </artifact>
+      <artifact>
+        <path>crates/x402-core/src/lib.rs</path>
+        <kind>library-stub</kind>
+        <symbol>add</symbol>
+        <lines>1-18</lines>
+        <reason>Core library stub. Comment at line 6 indicates future config management may live here. Currently minimal with basic test structure.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <rust>
+        <crate name="anyhow" version="1.0" workspace="true">Error handling with context</crate>
+        <crate name="serde" version="1.0" workspace="true" features="derive">Serialization framework</crate>
+        <crate name="serde_json" version="1.0" workspace="true">JSON serialization (pattern reference)</crate>
+        <crate name="directories" version="5.0" workspace="true">Platform-specific directory discovery (~/.x402dev/)</crate>
+        <crate name="clap" version="4.5" workspace="true" features="derive,color,suggestions,env,wrap_help">CLI framework with env var support</crate>
+        <crate name="serde_yaml" version="0.9" workspace="false">YAML config file parsing - NEEDS TO BE ADDED to workspace.dependencies</crate>
+      </rust>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>Pure Rust Implementation (ADR-001): Use serde_yaml for YAML parsing, NOT cosmiconfig/js-yaml (TypeScript)</constraint>
+    <constraint>Config Priority Order: CLI flags (highest) > Environment variables > Project config (.x402dev.yaml) > Global config (~/.x402dev/config.yaml) > Built-in defaults (lowest)</constraint>
+    <constraint>Error Handling: Use anyhow::Result with Context trait for clear error messages with actionable fix suggestions</constraint>
+    <constraint>Config File Locations: Global at ~/.x402dev/config.yaml, Project at ./.x402dev.yaml (current working directory)</constraint>
+    <constraint>Environment Variable Prefix: X402_DEV_* (e.g., X402_DEV_PORT, X402_DEV_SOLANA_RPC, X402_DEV_LOG_LEVEL)</constraint>
+    <constraint>Validation Requirements: Port range 1024-65535, Solana RPC URL must start with http:// or https://, Log level must be error|warn|info|debug|trace</constraint>
+    <constraint>Binary Size Target: Adding serde_yaml will add ~50-100KB to current 1.3MB binary, staying well within 2-3MB target</constraint>
+    <constraint>Module Organization: Config logic in crates/x402-cli/src/config.rs, Config command in crates/x402-cli/src/commands/config.rs</constraint>
+    <constraint>Workspace Dependencies Pattern: Add serde_yaml to [workspace.dependencies] first, then reference with { workspace = true } in crate Cargo.toml</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>Config struct</name>
+      <kind>data-structure</kind>
+      <signature>#[derive(Debug, Clone, Serialize, Deserialize)] pub struct Config { pub port: u16, pub solana_rpc: String, pub log_level: String }</signature>
+      <path>crates/x402-cli/src/config.rs (NEW)</path>
+    </interface>
+    <interface>
+      <name>load_global_config</name>
+      <kind>function</kind>
+      <signature>fn load_global_config() -> Result&lt;Option&lt;Config&gt;&gt;</signature>
+      <path>crates/x402-cli/src/config.rs (NEW)</path>
+    </interface>
+    <interface>
+      <name>load_project_config</name>
+      <kind>function</kind>
+      <signature>fn load_project_config() -> Result&lt;Option&lt;Config&gt;&gt;</signature>
+      <path>crates/x402-cli/src/config.rs (NEW)</path>
+    </interface>
+    <interface>
+      <name>load_merged_config</name>
+      <kind>function</kind>
+      <signature>pub fn load_merged_config(cli_overrides: Option&lt;&amp;CliConfig&gt;) -> Result&lt;Config&gt;</signature>
+      <path>crates/x402-cli/src/config.rs (NEW)</path>
+    </interface>
+    <interface>
+      <name>config::run</name>
+      <kind>command-handler</kind>
+      <signature>pub async fn run(args: &amp;crate::cli::ConfigArgs) -> anyhow::Result&lt;()&gt;</signature>
+      <path>crates/x402-cli/src/commands/config.rs (NEW)</path>
+    </interface>
+    <interface>
+      <name>ConfigArgs</name>
+      <kind>cli-args-struct</kind>
+      <signature>#[derive(Parser)] pub struct ConfigArgs { #[command(subcommand)] pub command: ConfigCommands } pub enum ConfigCommands { Show }</signature>
+      <path>crates/x402-cli/src/cli.rs (UPDATE)</path>
+    </interface>
+    <interface>
+      <name>dirs::home_dir (reusable pattern)</name>
+      <kind>helper-function</kind>
+      <signature>pub fn home_dir() -> Option&lt;PathBuf&gt;</signature>
+      <path>crates/x402-cli/src/commands/version.rs:130-144 (REFERENCE)</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Manual CLI testing approach (no unit tests required). Focus on integration testing via command execution. Test all configuration priority levels (5 total), validation scenarios, and error messages. Create sample config files (.x402dev.yaml, ~/.x402dev/config.yaml) and test priority order. Use environment variables (X402_DEV_*) to test env var override. Test CLI flags override all other sources. Verify error messages are clear and actionable for invalid configs (malformed YAML, invalid port, invalid URL, invalid log level). Test graceful handling of missing config files. Binary size verification after adding serde_yaml dependency.
+    </standards>
+    <locations>
+      No dedicated test directory currently exists. Testing via manual command execution: cargo build --release, then ./target/release/x402-dev config show with various config combinations. Test files to create: .x402dev.yaml (project), ~/.x402dev/config.yaml (global). Environment variable testing via export X402_DEV_PORT=9000, etc.
+    </locations>
+    <ideas>
+      <idea ac="1">Test CLI flags override: x402-dev config show --port=8888 with conflicting values in config files and env vars</idea>
+      <idea ac="2">Test env var override: export X402_DEV_PORT=7777, verify it overrides project/global config but not CLI flags</idea>
+      <idea ac="3">Test project config override: Create .x402dev.yaml with port: 6666, verify it overrides global config</idea>
+      <idea ac="4">Test global config override: Create ~/.x402dev/config.yaml with port: 5555, verify it overrides defaults (8402)</idea>
+      <idea ac="5">Test validation errors: port: 70000 (out of range), solana_rpc: "invalid-url" (bad format), log_level: "verbose" (invalid enum)</idea>
+      <idea ac="all">Test config show displays merged config with source annotations (e.g., "port: 8402 (default)", "solana_rpc: https://api.mainnet-beta.solana.com (project config)")</idea>
+      <idea ac="all">Test malformed YAML files show parse errors with file path and fix suggestion</idea>
+      <idea ac="all">Test missing config files are handled gracefully (no error, use defaults)</idea>
+    </ideas>
+  </tests>
+</story-context>
