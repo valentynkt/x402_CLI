@@ -28,3 +28,8 @@ uuid = { workspace = true }
 sysinfo = { workspace = true }
 nix = { workspace = true }
 fs2 = { workspace = true }
+
+[dev-dependencies]
+assert_cmd = "2.0"
+predicates = "3.0"
+tempfile = "3.8"

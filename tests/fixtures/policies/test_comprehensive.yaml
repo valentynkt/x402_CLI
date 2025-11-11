@@ -1,0 +1,14 @@
+policies:
+  - type: allowlist
+    field: agent_id
+    values:
+      - "agent-gpt4"
+      - "agent-claude"
+      - "agent-gemini"
+  - type: rate_limit
+    max_requests: 100
+    window_seconds: 3600
+  - type: spending_cap
+    max_amount: 10.00
+    currency: USDC
+    window_seconds: 86400

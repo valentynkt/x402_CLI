@@ -1,0 +1,7 @@
+policies:
+  - type: allowlist
+    field: agent_id
+    values:
+      - "agent-test-1"
+      - "agent-test-2"
+      - "agent-test-3"
