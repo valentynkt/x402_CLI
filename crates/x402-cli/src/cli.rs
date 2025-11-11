@@ -55,51 +55,147 @@ pub enum Commands {
 // Arguments will be populated in their respective epics
 
 #[derive(Args)]
+#[command(after_help = "\
+EXAMPLES:
+  x402-dev mock --port 3402
+  x402-dev mock --pricing 0.01
+
+SEE ALSO:
+  x402-dev test      Run test suites against mock server
+  x402-dev verify    Verify protocol compliance
+  x402-dev doctor    Diagnose setup issues
+")]
 pub struct MockArgs {
     // Epic 2: Mock facilitator server arguments
 }
 
 #[derive(Args)]
+#[command(after_help = "\
+EXAMPLES:
+  x402-dev test
+  x402-dev test --filter integration
+  x402-dev test --coverage
+
+SEE ALSO:
+  x402-dev mock      Start mock server for testing
+  x402-dev verify    Verify compliance after tests
+")]
 pub struct TestArgs {
     // Epic 3: Testing framework arguments
 }
 
 #[derive(Args)]
+#[command(after_help = "\
+EXAMPLES:
+  x402-dev verify
+  x402-dev verify --strict
+  x402-dev verify --output json
+
+SEE ALSO:
+  x402-dev test      Run automated test suites
+  x402-dev check     Check system health
+")]
 pub struct VerifyArgs {
     // Epic 3: Protocol verification arguments
 }
 
 #[derive(Args)]
+#[command(after_help = "\
+EXAMPLES:
+  x402-dev check
+  x402-dev check --verbose
+
+SEE ALSO:
+  x402-dev doctor    Diagnose and fix issues
+  x402-dev config    View configuration
+  x402-dev verify    Verify protocol compliance
+")]
 pub struct CheckArgs {
     // Epic 4: Health check arguments
 }
 
 #[derive(Args)]
+#[command(after_help = "\
+EXAMPLES:
+  x402-dev monitor
+  x402-dev monitor --interval 5
+  x402-dev monitor --verbose
+
+SEE ALSO:
+  x402-dev policy    Manage payment policies
+")]
 pub struct MonitorArgs {
     // Epic 5: Transaction monitoring arguments
 }
 
 #[derive(Args)]
+#[command(after_help = "\
+EXAMPLES:
+  x402-dev policy list
+  x402-dev policy create --name 'Standard Payment'
+  x402-dev policy update policy-123
+
+SEE ALSO:
+  x402-dev monitor   Monitor policy execution
+")]
 pub struct PolicyArgs {
     // Epic 5: Policy management arguments
 }
 
 #[derive(Args)]
+#[command(after_help = "\
+EXAMPLES:
+  x402-dev examples
+  x402-dev examples --language typescript
+  x402-dev examples --topic payments
+
+SEE ALSO:
+  x402-dev init      Initialize new project
+")]
 pub struct ExamplesArgs {
     // Epic 6: Example display arguments
 }
 
 #[derive(Args)]
+#[command(after_help = "\
+EXAMPLES:
+  x402-dev doctor
+  x402-dev doctor --fix
+
+SEE ALSO:
+  x402-dev check     Quick health check
+  x402-dev config    View configuration
+  x402-dev version   Check version info
+")]
 pub struct DoctorArgs {
     // Epic 4: Diagnostic arguments
 }
 
 #[derive(Args)]
+#[command(after_help = "\
+EXAMPLES:
+  x402-dev init
+  x402-dev init --defaults
+  x402-dev init --template minimal
+
+SEE ALSO:
+  x402-dev config    Manage configuration
+  x402-dev examples  View example code
+")]
 pub struct InitArgs {
     // Epic 6: Project initialization arguments
 }
 
 #[derive(Args)]
+#[command(after_help = "\
+EXAMPLES:
+  x402-dev version
+  x402-dev version --no-update-check
+
+SEE ALSO:
+  x402-dev doctor    Diagnose issues
+  x402-dev config    View configuration
+")]
 pub struct VersionArgs {
     /// Skip checking for updates
     #[arg(long)]
@@ -107,6 +203,28 @@ pub struct VersionArgs {
 }
 
 #[derive(Args)]
+#[command(after_help = "\
+EXAMPLES:
+  x402-dev config show
+  x402-dev config show --port 8888
+  X402_DEV_PORT=9999 x402-dev config show
+
+PRIORITY ORDER:
+  CLI flags > Environment variables > Project config > Global config > Defaults
+
+CONFIG FILES:
+  Global: ~/.x402dev/config.yaml
+  Project: ./.x402dev.yaml
+
+ENVIRONMENT VARIABLES:
+  X402_DEV_PORT         Override port (e.g., 8402)
+  X402_DEV_SOLANA_RPC   Override Solana RPC URL
+  X402_DEV_LOG_LEVEL    Override log level (error|warn|info|debug|trace)
+
+SEE ALSO:
+  x402-dev init      Initialize project configuration
+  x402-dev check     Validate configuration
+")]
 pub struct ConfigArgs {
     #[command(subcommand)]
     pub command: ConfigCommands,
