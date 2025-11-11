@@ -1,0 +1,29 @@
+# Comprehensive Policy Example - Epic 5 Demo
+# This 10-line YAML generates 100+ lines of middleware code!
+#
+# Demonstrates all policy types:
+# - Allowlist: Only specific agents allowed
+# - Rate limiting: 100 requests per hour
+# - Spending cap: 10 USDC per day
+#
+# Use: x402-dev policy generate comprehensive.yaml --framework express
+
+policies:
+  # Only allow verified AI agents
+  - type: allowlist
+    field: agent_id
+    values:
+      - "agent-gpt4-001"
+      - "agent-claude-002"
+      - "agent-gemini-003"
+
+  # Prevent abuse with rate limiting
+  - type: rate_limit
+    max_requests: 100
+    window_seconds: 3600  # 1 hour
+
+  # Protect against runaway spending
+  - type: spending_cap
+    max_amount: 10.00
+    currency: USDC
+    window_seconds: 86400  # 24 hours

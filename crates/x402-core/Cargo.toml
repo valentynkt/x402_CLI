@@ -8,4 +8,15 @@ name = "x402_core"
 path = "src/lib.rs"
 
 [dependencies]
-# Core dependencies will be added in future stories
+# Error handling
+anyhow = { workspace = true }
+chrono = { workspace = true, features = ["serde"] }
+humantime-serde = "1.1.1"
+
+# Serialization and YAML parsing (FR-5.1)
+serde = { workspace = true }
+serde_json.workspace = true
+serde_yaml = { workspace = true }
+
+# Validation support
+thiserror = "1.0"

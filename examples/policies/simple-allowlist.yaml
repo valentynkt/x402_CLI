@@ -1,0 +1,10 @@
+# Simple Allowlist Policy Example
+# Only allows specified agents to access the API
+
+policies:
+  - type: allowlist
+    field: agent_id
+    values:
+      - "agent-abc-123"
+      - "agent-xyz-789"
+      - "agent-demo-001"

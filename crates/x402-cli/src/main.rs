@@ -5,7 +5,7 @@ mod errors;
 
 use clap::Parser;
 use cli::{Cli, Commands};
-use commands::{config as config_cmd, init, mock, version};
+use commands::{config as config_cmd, init, mock, policy, version};
 use errors::{convert_anyhow_to_cli_error, print_error};
 
 // ADR-002: Use multi-thread runtime (no V8 constraints in pure Rust)
@@ -31,10 +31,7 @@ async fn main() {
             println!("Command 'monitor' not yet implemented - coming in Epic 5");
             Ok(())
         }
-        Commands::Policy(_) => {
-            println!("Command 'policy' not yet implemented - coming in Epic 5");
-            Ok(())
-        }
+        Commands::Policy(args) => policy::handle_policy_command(args),
         Commands::Examples(_) => {
             println!("Command 'examples' not yet implemented - coming in Epic 6");
             Ok(())

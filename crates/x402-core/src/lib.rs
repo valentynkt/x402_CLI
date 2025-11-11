@@ -5,8 +5,15 @@
 // - Protocol handlers
 // - Configuration management
 // - Policy enforcement
-//
-// Future stories will populate this with actual functionality
+
+pub mod policy;
+
+pub use policy::{
+    validate_policies, IssueType, PolicyAction, PolicyConfig, PolicyRule, PolicyType,
+    ResolutionSuggestion, ValidationIssue, ValidationReport,
+    // Runtime types
+    PolicyEngine, PolicyDecision, Request, RuntimePolicy,
+};
 
 #[cfg(test)]
 mod tests {

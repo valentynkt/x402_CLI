@@ -150,19 +150,8 @@ pub struct MonitorArgs {
     // Epic 5: Transaction monitoring arguments
 }
 
-#[derive(Args)]
-#[command(after_help = "\
-EXAMPLES:
-  x402-dev policy list
-  x402-dev policy create --name 'Standard Payment'
-  x402-dev policy update policy-123
-
-SEE ALSO:
-  x402-dev monitor   Monitor policy execution
-")]
-pub struct PolicyArgs {
-    // Epic 5: Policy management arguments
-}
+// PolicyArgs is now defined in commands/policy.rs
+pub use crate::commands::policy::PolicyArgs;
 
 #[derive(Args)]
 #[command(after_help = "\

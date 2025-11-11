@@ -1,0 +1,8 @@
+# Spending Cap Policy Example
+# Limits total spending to 10 USDC per day
+
+policies:
+  - type: spending_cap
+    max_amount: 10.00
+    currency: USDC
+    window_seconds: 86400  # 24 hours

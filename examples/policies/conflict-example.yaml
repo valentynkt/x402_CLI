@@ -1,0 +1,19 @@
+# Conflicting Policy Example
+# This file demonstrates conflict detection (FR-5.6)
+#
+# The same agent is in both allowlist AND denylist
+# Running: x402-dev policy validate conflict-example.yaml
+# Should detect and report the conflict
+
+policies:
+  - type: allowlist
+    field: agent_id
+    values:
+      - "agent-abc-123"
+      - "agent-xyz-789"
+
+  - type: denylist
+    field: agent_id
+    values:
+      - "agent-abc-123"  # CONFLICT: also in allowlist!
+      - "agent-bad-actor"

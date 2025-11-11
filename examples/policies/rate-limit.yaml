@@ -1,0 +1,7 @@
+# Rate Limiting Policy Example
+# Limits agents to 100 requests per hour
+
+policies:
+  - type: rate_limit
+    max_requests: 100
+    window_seconds: 3600
