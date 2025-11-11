@@ -367,6 +367,9 @@ pub struct ConfigWithSources {
     pub port_source: String,
     pub solana_rpc_source: String,
     pub log_level_source: String,
+    /// Reserved for Epic 2: Will be displayed in config show command
+    /// when per-resource pricing tracking is implemented
+    #[allow(dead_code)]
     pub pricing_source: String,
 }
 

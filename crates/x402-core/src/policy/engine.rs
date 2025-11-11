@@ -269,7 +269,7 @@ impl PolicyEngine {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::time::{Duration, UNIX_EPOCH};
+    use std::time::Duration;
 
     fn create_test_request(agent_id: &str, amount: u64, endpoint: &str) -> Request {
         Request {

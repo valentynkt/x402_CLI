@@ -124,11 +124,19 @@ impl Invoice {
     }
 
     /// Check if invoice has expired
+    ///
+    /// Reserved for Epic 2: Payment verification will need to check invoice expiration
+    /// before accepting payments (Story 2.1: Solana RPC Integration)
+    #[allow(dead_code)]
     pub fn is_expired(&self) -> bool {
         Utc::now() > self.expires_at
     }
 
     /// Get remaining time until expiration
+    ///
+    /// Reserved for Epic 2: Will be used in payment verification to display
+    /// remaining time for users and in timeout handling (Story 2.3)
+    #[allow(dead_code)]
     pub fn time_until_expiration(&self) -> Duration {
         self.expires_at - Utc::now()
     }
@@ -179,11 +187,19 @@ impl InvoiceGenerator {
     }
 
     /// Get a specific test address by index
+    ///
+    /// Reserved for Epic 2: Will be used in payment verification tests
+    /// to generate predictable test addresses for validation scenarios
+    #[allow(dead_code)]
     pub fn get_test_address(index: usize) -> &'static str {
         TEST_ADDRESSES[index % TEST_ADDRESSES.len()]
     }
 
     /// Get total number of test addresses
+    ///
+    /// Reserved for Epic 2: Used in test infrastructure to validate
+    /// address pool rotation and ensure adequate test coverage
+    #[cfg(test)]
     pub fn test_address_count() -> usize {
         TEST_ADDRESSES.len()
     }

@@ -197,9 +197,9 @@ function generateInvoice(agentId, resource) {{
     )
 }
 
-fn generate_audit_logger(_config: &PolicyFile) -> String {
-    let format = "json";
-    let destination = "stdout";
+fn generate_audit_logger(config: &PolicyFile) -> String {
+    let format = &config.audit.format;
+    let destination = config.audit.destination.as_deref().unwrap_or("stdout");
 
     format!(
         r#"/**
@@ -360,9 +360,9 @@ const x402Middleware = (req, res, next) => {
        invoice: invoice,
        amount: "#,
     );
-    code.push_str("0.01");
+    code.push_str(&format!("{}", config.pricing.amount));
     code.push_str(",\n       currency: '");
-    code.push_str("USDC");
+    code.push_str(&config.pricing.currency);
     code.push_str(
         r#"'
      });
@@ -378,7 +378,7 @@ module.exports = x402Middleware;
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::policy::rules::{PolicyRule, AuditConfig, PricingConfig};
+    use crate::policy::rules::{PolicyFile, AuditConfig, PricingConfig};
 
     #[test]
     fn test_generate_header() {
@@ -404,7 +404,7 @@ mod tests {
 
     #[test]
     fn test_generate_invoice_helper() {
-        let config = PolicyConfig {
+        let config = PolicyFile {
             policies: vec![],
             pricing: PricingConfig {
                 amount: 0.02,
@@ -423,7 +423,7 @@ mod tests {
 
     #[test]
     fn test_generate_audit_logger() {
-        let config = PolicyConfig {
+        let config = PolicyFile {
             policies: vec![],
             pricing: PricingConfig::default(),
             audit: AuditConfig {
@@ -434,16 +434,17 @@ mod tests {
         };
 
         let logger = generate_audit_logger(&config);
-        assert!(helper.contains("function logPaymentAttempt"));
+        assert!(logger.contains("function logPaymentAttempt"));
         assert!(logger.contains("csv"));
         assert!(logger.contains("/var/log/audit.csv"));
     }
 
     #[test]
     fn test_generate_middleware_with_allowlist() {
-        let config = PolicyConfig {
+        let config = PolicyFile {
             policies: vec![PolicyRule::Allowlist {
-                agents: vec!["agent-1".to_string(), "agent-2".to_string()],
+                field: "agent_id".to_string(),
+                values: vec!["agent-1".to_string(), "agent-2".to_string()],
             }],
             pricing: PricingConfig::default(),
             audit: AuditConfig::default(),
@@ -459,10 +460,10 @@ mod tests {
 
     #[test]
     fn test_generate_middleware_with_rate_limit() {
-        let config = PolicyConfig {
+        let config = PolicyFile {
             policies: vec![PolicyRule::RateLimit {
                 max_requests: 100,
-                window: 3600,
+                window_seconds: 3600,
             }],
             pricing: PricingConfig::default(),
             audit: AuditConfig::default(),
@@ -477,14 +478,15 @@ mod tests {
 
     #[test]
     fn test_generate_complete_middleware() {
-        let config = PolicyConfig {
+        let config = PolicyFile {
             policies: vec![
                 PolicyRule::Allowlist {
-                    agents: vec!["agent-123".to_string()],
+                    field: "agent_id".to_string(),
+                    values: vec!["agent-123".to_string()],
                 },
                 PolicyRule::RateLimit {
                     max_requests: 50,
-                    window: 60,
+                    window_seconds: 60,
                 },
             ],
             pricing: PricingConfig {

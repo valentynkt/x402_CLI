@@ -2,6 +2,8 @@ use colored::Colorize;
 use std::fmt;
 
 /// Exit codes following POSIX conventions
+/// Reserved for future use when explicit success exit codes are needed
+#[allow(dead_code)]
 pub const EXIT_SUCCESS: i32 = 0;
 pub const EXIT_GENERAL: i32 = 1;
 pub const EXIT_CONFIG: i32 = 2;
@@ -11,18 +13,24 @@ pub const EXIT_NETWORK: i32 = 3;
 #[derive(Debug)]
 pub enum CliError {
     /// Configuration-related errors (exit code 2)
+    /// Reserved for Epic 2: Config validation in server startup
+    #[allow(dead_code)]
     Config {
         message: String,
         suggestion: Option<String>,
         code: &'static str,
     },
     /// Network-related errors (exit code 3)
+    /// Reserved for Epic 2: Solana RPC connection errors
+    #[allow(dead_code)]
     Network {
         message: String,
         suggestion: Option<String>,
         code: &'static str,
     },
     /// Validation errors (exit code 1)
+    /// Reserved for Epic 2: Payment validation errors
+    #[allow(dead_code)]
     Validation {
         message: String,
         suggestion: Option<String>,
@@ -62,6 +70,8 @@ impl CliError {
     }
 
     /// Helper: Create a config error
+    /// Reserved for Epic 2: Server startup config validation
+    #[allow(dead_code)]
     pub fn config(message: impl Into<String>, code: &'static str) -> Self {
         CliError::Config {
             message: message.into(),
@@ -71,6 +81,8 @@ impl CliError {
     }
 
     /// Helper: Create a config error with suggestion
+    /// Reserved for Epic 2: Server startup config validation with hints
+    #[allow(dead_code)]
     pub fn config_with_suggestion(
         message: impl Into<String>,
         suggestion: impl Into<String>,
@@ -84,6 +96,8 @@ impl CliError {
     }
 
     /// Helper: Create a network error
+    /// Reserved for Epic 2: Solana RPC connection error handling
+    #[allow(dead_code)]
     pub fn network(message: impl Into<String>, code: &'static str) -> Self {
         CliError::Network {
             message: message.into(),
@@ -93,6 +107,8 @@ impl CliError {
     }
 
     /// Helper: Create a network error with suggestion
+    /// Reserved for Epic 2: Solana RPC connection error handling with hints
+    #[allow(dead_code)]
     pub fn network_with_suggestion(
         message: impl Into<String>,
         suggestion: impl Into<String>,
@@ -106,6 +122,8 @@ impl CliError {
     }
 
     /// Helper: Create a validation error
+    /// Reserved for Epic 2: Payment validation error handling
+    #[allow(dead_code)]
     pub fn validation(message: impl Into<String>, code: &'static str) -> Self {
         CliError::Validation {
             message: message.into(),
@@ -115,6 +133,8 @@ impl CliError {
     }
 
     /// Helper: Create a validation error with suggestion
+    /// Reserved for Epic 2: Payment validation error handling with hints
+    #[allow(dead_code)]
     pub fn validation_with_suggestion(
         message: impl Into<String>,
         suggestion: impl Into<String>,
