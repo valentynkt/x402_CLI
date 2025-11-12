@@ -5,8 +5,10 @@
 // - Protocol handlers
 // - Configuration management
 // - Policy enforcement
+// - Testing framework
 
 pub mod policy;
+pub mod testing;
 
 pub use policy::{
     validate_policies, IssueType, PolicyAction, PolicyConfig, PolicyRule, PolicyType,

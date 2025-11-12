@@ -95,14 +95,19 @@ impl RateLimitState {
     ///
     /// Uses sliding window algorithm: counts requests within `window` duration
     /// from the current time.
+    ///
+    /// # Security: Future Timestamp Protection
+    /// Also enforces upper bound (time <= now) to prevent attackers from bypassing
+    /// rate limits by submitting requests with future timestamps.
     pub fn check_limit(&self, window: Duration, max_requests: u32, now: SystemTime) -> bool {
         let window_start = now.checked_sub(window).unwrap_or(now);
 
         // Count requests within the sliding window
+        // SECURITY: Must check both lower AND upper bounds to prevent future timestamp attacks
         let count = self
             .request_times
             .iter()
-            .filter(|&&time| time >= window_start)
+            .filter(|&&time| time >= window_start && time <= now)
             .count();
 
         count < max_requests as usize
@@ -279,7 +284,7 @@ mod tests {
         rl_state.add_request(SystemTime::now());
         state.update_rate_limit_state("test2".to_string(), rl_state);
 
-        handle.join().unwrap();
+        handle.join().expect("Thread should not panic during test");
 
         // Both states should exist
         assert_eq!(state.get_rate_limit_state("test").request_times.len(), 1);

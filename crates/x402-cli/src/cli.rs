@@ -1,5 +1,10 @@
 use clap::{Args, Parser, Subcommand};
 
+/// Parse log level from string for CLI argument
+fn parse_log_level(s: &str) -> Result<crate::config::LogLevel, String> {
+    s.parse()
+}
+
 #[derive(Parser)]
 #[command(name = "x402-dev", about = "x402 Protocol Standard Toolkit", version)]
 pub struct Cli {
@@ -94,16 +99,34 @@ pub enum MockSubcommand {
 #[derive(Args)]
 #[command(after_help = "\
 EXAMPLES:
-  x402-dev test
-  x402-dev test --filter integration
-  x402-dev test --coverage
+  x402-dev test tests/suite.yaml
+  x402-dev test tests/suite.yaml --json
+  x402-dev test tests/suite.yaml --quiet
+  x402-dev test tests/suite.yaml --junit report.xml
 
 SEE ALSO:
   x402-dev mock      Start mock server for testing
   x402-dev verify    Verify compliance after tests
 ")]
 pub struct TestArgs {
-    // Epic 3: Testing framework arguments
+    /// Path to YAML test suite file
+    pub suite: std::path::PathBuf,
+
+    /// Output results in JSON format (for CI/CD integration)
+    #[arg(long)]
+    pub json: bool,
+
+    /// Suppress verbose output, only show summary
+    #[arg(long, short)]
+    pub quiet: bool,
+
+    /// Generate JUnit XML report (for CI/CD integration)
+    #[arg(long, value_name = "FILE")]
+    pub junit: Option<std::path::PathBuf>,
+
+    /// Generate HTML report (optional)
+    #[arg(long, value_name = "FILE")]
+    pub html: Option<std::path::PathBuf>,
 }
 
 #[derive(Args)]
@@ -248,9 +271,9 @@ pub struct ConfigArgs {
     #[arg(long, global = true)]
     pub solana_rpc: Option<String>,
 
-    /// Override log level
-    #[arg(long, global = true)]
-    pub log_level: Option<String>,
+    /// Override log level (error, warn, info, debug, trace)
+    #[arg(long, global = true, value_parser = parse_log_level)]
+    pub log_level: Option<crate::config::LogLevel>,
 }
 
 #[derive(Subcommand)]

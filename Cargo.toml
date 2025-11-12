@@ -3,6 +3,8 @@ resolver = "2"
 members = [
     "crates/x402-cli",
     "crates/x402-core",
+    "crates/x402-domain",
+    "crates/x402-server",
     "crates/xtask",
 ]
 

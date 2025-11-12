@@ -4,7 +4,7 @@
 // These tests ensure that the policy engine works correctly when
 // handling multiple concurrent requests from a multi-threaded server
 
-use x402_core::policy::state::{PolicyState, RateLimitState, SpendingState};
+use x402_core::policy::state::PolicyState;
 use x402_core::policy::runtime_types::{RateLimitConfig, SpendingCapConfig};
 use std::sync::Arc;
 use std::thread;
@@ -39,7 +39,7 @@ fn test_concurrent_rate_limit_access() {
     }
 
     // Verify state is accessible after concurrent operations
-    let final_state = state.get_rate_limit_state("agent-0");
+    let _final_state = state.get_rate_limit_state("agent-0");
     // Should have accumulated some requests
     // (Exact count may vary due to race conditions in get/update)
 }
@@ -113,7 +113,7 @@ fn test_mixed_concurrent_operations() {
     }
 
     // Both types of state should be accessible
-    let rate_state = state.get_rate_limit_state("agent-0");
+    let _rate_state = state.get_rate_limit_state("agent-0");
     let spending_state = state.get_spending_state("agent-0");
 
     // Basic sanity checks
@@ -149,7 +149,7 @@ fn test_concurrent_rate_limit_checking() {
 
             for _ in 0..20 {
                 let rate_state = state_clone.get_rate_limit_state(key);
-                let is_limited = rate_state.is_rate_limited(&config_clone, now);
+                let _is_limited = !rate_state.check_limit(config_clone.window, config_clone.max_requests, now);
 
                 // Should get consistent results
                 // (May change over time as more requests are added by other threads)
@@ -233,7 +233,7 @@ fn test_concurrent_cleanup() {
             for _ in 0..10 {
                 let rate_state = state_clone.get_rate_limit_state("old-agent");
                 // This should trigger cleanup of expired entries
-                rate_state.is_rate_limited(&config, now);
+                let _ = !rate_state.check_limit(config.window, config.max_requests, now);
             }
         });
         handles.push(handle);
@@ -264,7 +264,7 @@ fn test_thread_local_isolation() {
             state_clone.update_rate_limit_state(key.clone(), rate_state);
 
             // Verify count matches what we added
-            let final_state = state_clone.get_rate_limit_state(&key);
+            let _final_state = state_clone.get_rate_limit_state(&key);
             // Return the key for verification
             key
         });

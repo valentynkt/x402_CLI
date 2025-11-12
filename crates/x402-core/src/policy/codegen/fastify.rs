@@ -59,19 +59,17 @@ const fp = require('fastify-plugin');
     code.push_str(&generate_plugin_function(policies));
 
     // Export with metadata
-    code.push_str(&format!(
-        r#"
+    code.push_str(&r#"
 // Export plugin with metadata
-module.exports = fp(x402PolicyPlugin, {{
+module.exports = fp(x402PolicyPlugin, {
   fastify: '4.x',
   name: 'x402-policy-plugin',
-  decorators: {{
+  decorators: {
     request: [],
     reply: []
-  }}
-}});
-"#
-    ));
+  }
+});
+"#.to_string());
 
     code
 }

@@ -9,6 +9,7 @@ path = "src/main.rs"
 
 [dependencies]
 x402-core = { path = "../x402-core" }
+x402-server = { path = "../x402-server" }
 clap = { workspace = true }
 tokio = { workspace = true }
 anyhow = { workspace = true }
@@ -20,16 +21,12 @@ directories = { workspace = true }
 semver = { workspace = true }
 colored = { workspace = true }
 dialoguer = { workspace = true }
-actix-web = { workspace = true }
-actix-cors = { workspace = true }
-actix-rt = { workspace = true }
 chrono = { workspace = true }
 uuid = { workspace = true }
-sysinfo = { workspace = true }
-nix = { workspace = true }
-fs2 = { workspace = true }
 
 [dev-dependencies]
 assert_cmd = "2.0"
 predicates = "3.0"
 tempfile = "3.8"
+actix-web = { workspace = true }
+actix-cors = { workspace = true }

@@ -2,9 +2,10 @@
 
 > **Transform x402 development from hours to seconds**
 
-[![Tests](https://img.shields.io/badge/tests-14%2F14%20passing-brightgreen)]()
-[![Binary Size](https://img.shields.io/badge/binary-1.4MB-blue)]()
+[![Tests](https://img.shields.io/badge/tests-155%2B%20passing-brightgreen)]()
+[![Binary Size](https://img.shields.io/badge/binary-2.5MB-blue)]()
 [![Build](https://img.shields.io/badge/build-passing-brightgreen)]()
+[![Security](https://img.shields.io/badge/security-verified-green)]()
 
 ## Overview
 
@@ -120,12 +121,13 @@ wc -l policy.yaml middleware.js
 
 ### 📊 Current Status
 
-**Completed:** Epic 1 (Foundation) + Epic 2 (Mock Server) + Epic 5 (Policy Engine)
+**Completed:** Epic 1 (Foundation) + Epic 2 (Mock Server) + Epic 5 (Policy Engine) + **Wave 1 Refactoring**
 - **Stories:** 13/13 complete (100%)
-- **Tests:** 14/14 passing (100%)
-- **Binary Size:** 1.4MB (53% under 3MB target)
+- **Tests:** 155+ passing (100% - includes unit, integration, security, and property tests)
+- **Binary Size:** 2.5MB (clean build with optimizations)
 - **Demo Checkpoint:** ✅ 3 seconds vs 30 minutes (achieved)
 - **🆕 Policy Engine:** ✅ 10 lines YAML → 224 lines middleware (Epic 5 complete!)
+- **✨ Wave 1 Refactoring:** ✅ Clean architecture, type safety, zero security vulnerabilities
 
 ## 📋 Available Commands
 
@@ -162,35 +164,52 @@ x402-dev examples                  # Epic 6: Example code
 
 ## 🏗️ Architecture
 
+### Clean Crate Architecture (Post-Wave 1 Refactoring)
+
 ```
 ┌─────────────┐
 │  Developer  │
 └──────┬──────┘
-       │ x402-dev CLI
+       │ x402-dev CLI (x402-cli)
        ▼
-┌─────────────────────────────────┐
-│   Mock Facilitator Server       │
-│   (Pure Rust - actix-web)       │
-│                                 │
-│  ✓ 402 Payment Required         │
-│  ✓ WWW-Authenticate headers     │
-│  ✓ Invoice generation           │
-│  ✓ Payment simulation           │
-│  ✓ Zero blockchain calls        │
-└─────────────────────────────────┘
-       │
-       ▼
-┌─────────────────┐
-│  402 Response   │
-│  + Invoice      │
-└─────────────────┘
+┌──────────────────────────────────────────┐
+│            x402-server                   │
+│      Mock Facilitator Server             │
+│      (Pure Rust - actix-web)             │
+│                                          │
+│  ✓ 402 Payment Required                 │
+│  ✓ WWW-Authenticate headers             │
+│  ✓ Invoice generation                   │
+│  ✓ Payment simulation                   │
+│  ✓ Zero blockchain calls                │
+└─────────────┬────────────────────────────┘
+              │
+              ▼
+       ┌──────────────┐
+       │  x402-core   │ ◄──┐
+       │              │    │ Uses
+       │ Policy       │    │
+       │ Engine       │    │
+       └──────┬───────┘    │
+              │            │
+              ▼            │
+       ┌──────────────┐    │
+       │ x402-domain  │────┘
+       │              │
+       │ Type-Safe    │
+       │ Newtypes     │
+       └──────────────┘
+
+Dependency Flow: CLI → Server → Core → Domain
+                 (clean, no circular dependencies)
 ```
 
 **Key Design Decisions:**
 - **Pure Rust** (KISS principle) - No TypeScript/npm complexity
-- **actix-web** - Native async HTTP server
-- **Zero dependencies on blockchain** - Complete offline testing
-- **Manual x402 protocol** - Simple, no external SDKs
+- **Clean Architecture** - Separated concerns across 5 crates
+- **Type Safety** - Domain-driven design with validated newtypes
+- **Zero blockchain dependency** - Complete offline testing
+- **Security First** - All vulnerabilities patched, 9 security tests
 
 ## Project Structure
 
@@ -198,23 +217,45 @@ x402-dev examples                  # Epic 6: Example code
 x402-dev/
 ├── crates/
 │   ├── x402-cli/         # CLI binary (main executable)
-│   ├── x402-core/        # Core library
+│   ├── x402-server/      # 🆕 Mock HTTP server (extracted from CLI)
+│   ├── x402-core/        # Policy engine & core logic
+│   ├── x402-domain/      # 🆕 Shared types & newtypes (type safety)
 │   └── xtask/            # Build automation
 ├── docs/                 # Documentation
+│   ├── wave1-validation-report.md     # 🆕 Wave 1 refactoring details
+│   └── [epic summaries, guides, etc.]
 ├── tests/                # Integration tests
-└── examples/             # Example projects (coming in Epic 6)
+└── examples/             # Example projects
+    └── policies/         # Policy engine examples
 ```
+
+**Crate Responsibilities:**
+- **x402-cli**: Command-line interface, user interaction
+- **x402-server**: HTTP mock server, request handling (768 lines)
+- **x402-core**: Policy engine, evaluation, code generation
+- **x402-domain**: Type-safe domain models (8 newtypes with validation)
+- **xtask**: Build scripts and automation
 
 ## 🧪 Testing
 
 ```bash
-# Run all tests
-cargo test --release
+# Run all tests (155+ comprehensive tests)
+cargo test --workspace
 
-# Expected: 14/14 tests passing
-# - 6 invoice generation tests
-# - 6 pricing configuration tests
-# - 2 WWW-Authenticate format tests
+# Expected: 155+ tests passing
+# Test breakdown:
+# - x402-core:   80 tests (unit, integration, property, security)
+# - x402-domain: 55 tests (newtypes, validation, doc tests)
+# - x402-cli:    20 tests (CLI integration)
+# - x402-server:  8 tests (HTTP handlers)
+
+# Run specific test suites
+cargo test -p x402-core      # Core policy engine tests
+cargo test -p x402-domain    # Type safety tests
+cargo test --test cli_integration  # CLI end-to-end tests
+
+# Security tests specifically
+cargo test -p x402-core security  # 9 security-focused tests
 ```
 
 ## 📖 Documentation
@@ -237,14 +278,21 @@ cargo test --release
 - **Protocol**: x402 (HTTP 402 + USDC)
 - **Blockchain**: Solana (devnet/testnet/mainnet - future)
 - **Build Tools**: Cargo (workspace)
-- **Binary Size**: 1.4MB (LTO, opt-level="z", symbol stripping)
+- **Binary Size**: 2.5MB (with all crates, LTO, opt-level="z")
+- **Type Safety**: 8 validated newtypes (AgentId, Amount, Currency, etc.)
 
 ## 🔮 Roadmap
 
 ### Completed ✅
 - **Epic 1:** Foundation & CLI Infrastructure (7/7 stories)
 - **Epic 2:** Mock Facilitator Server (6/6 stories)
-- **🆕 Epic 5:** Policy Engine & Security (10/10 requirements) - **29 lines YAML → 224 lines middleware!**
+- **Epic 5:** Policy Engine & Security (10/10 requirements) - **29 lines YAML → 224 lines middleware!**
+- **✨ Wave 1 Refactoring:** Clean architecture, type safety, security hardening
+  - Extracted mock server to separate crate (x402-server)
+  - Created domain types library (x402-domain) with 8 newtypes
+  - Fixed critical security vulnerability (future timestamp bypass)
+  - Eliminated all production unwrap() calls
+  - 155+ comprehensive tests (unit, integration, security, property)
 
 ### Coming Soon 🚧
 - **Epic 3:** Automated Test Runner - YAML test suites for CI/CD

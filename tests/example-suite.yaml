@@ -1,0 +1,163 @@
+# Example Test Suite for Epic 3 (FR-2.1 & FR-2.2)
+# Tests against Epic 2 mock server at http://localhost:3402
+#
+# Usage:
+#   x402-dev test tests/example-suite.yaml
+#   x402-dev test tests/example-suite.yaml --format json
+#   x402-dev test tests/example-suite.yaml --format junit --output results.xml
+
+tests:
+  # Test 1: Basic 402 response on protected resource
+  - name: "Test 402 Payment Required response"
+    url: "http://localhost:3402/api/data"
+    method: GET
+    expect:
+      status: 402
+      headers:
+        - name: WWW-Authenticate
+          exists: true
+
+  # Test 2: Verify WWW-Authenticate header structure
+  - name: "Test WWW-Authenticate header contains x402-solana"
+    url: "http://localhost:3402/api/premium"
+    method: GET
+    expect:
+      status: 402
+      headers:
+        - name: WWW-Authenticate
+          exists: true
+          contains: "x402-solana"
+        - name: WWW-Authenticate
+          contains: "recipient="
+        - name: WWW-Authenticate
+          contains: "amount="
+
+  # Test 3: Validate invoice amount for default pricing
+  - name: "Test invoice amount equals default pricing (0.01 SOL)"
+    url: "http://localhost:3402/api/data"
+    method: GET
+    expect:
+      status: 402
+      invoice_amount: 0.01
+
+  # Test 4: Test custom pricing for specific resource
+  - name: "Test invoice amount for premium resource (0.05 SOL)"
+    url: "http://localhost:3402/api/premium"
+    method: POST
+    expect:
+      status: 402
+      invoice_amount: 0.05
+      headers:
+        - name: WWW-Authenticate
+          exists: true
+
+  # Test 5: Test POST method
+  - name: "Test 402 response on POST request"
+    url: "http://localhost:3402/api/data"
+    method: POST
+    expect:
+      status: 402
+      headers:
+        - name: WWW-Authenticate
+          exists: true
+
+  # Test 6: Test PUT method
+  - name: "Test 402 response on PUT request"
+    url: "http://localhost:3402/api/data"
+    method: PUT
+    expect:
+      status: 402
+      headers:
+        - name: WWW-Authenticate
+          exists: true
+
+  # Test 7: Test DELETE method
+  - name: "Test 402 response on DELETE request"
+    url: "http://localhost:3402/api/data"
+    method: DELETE
+    expect:
+      status: 402
+      headers:
+        - name: WWW-Authenticate
+          exists: true
+
+  # Test 8: Test regex pattern matching on header
+  - name: "Test WWW-Authenticate matches x402-solana pattern"
+    url: "http://localhost:3402/api/data"
+    method: GET
+    expect:
+      status: 402
+      headers:
+        - name: WWW-Authenticate
+          regex: "^x402-solana\\s+recipient=[A-Za-z0-9]+.*amount=[0-9.]+.*currency=(SOL|USDC)"
+
+  # Test 9: Test response time performance
+  - name: "Test response time is under 1000ms"
+    url: "http://localhost:3402/api/data"
+    method: GET
+    expect:
+      status: 402
+      response_time_ms: 1000
+
+  # Test 10: Test wildcard pricing route
+  - name: "Test wildcard pricing for /api/admin/* routes"
+    url: "http://localhost:3402/api/admin/users"
+    method: GET
+    expect:
+      status: 402
+      invoice_amount: 0.02
+      headers:
+        - name: WWW-Authenticate
+          exists: true
+
+  # Test 11: Multiple assertions combined
+  - name: "Test comprehensive assertions on protected endpoint"
+    url: "http://localhost:3402/api/data"
+    method: GET
+    expect:
+      status: 402
+      invoice_amount: 0.01
+      response_time_ms: 500
+      headers:
+        - name: WWW-Authenticate
+          exists: true
+          contains: "x402-solana"
+          regex: "amount=0\\.01"
+        - name: Content-Type
+          exists: true
+
+  # Test 12: Test exact header value matching
+  - name: "Test Content-Type header value"
+    url: "http://localhost:3402/api/data"
+    method: GET
+    expect:
+      status: 402
+      headers:
+        - name: Content-Type
+          value: "application/json"
+
+  # Test 13: Test different endpoint with different pricing
+  - name: "Test high-value endpoint pricing"
+    url: "http://localhost:3402/api/enterprise"
+    method: GET
+    expect:
+      status: 402
+      invoice_amount: 0.10
+
+  # Test 14: Test root path
+  - name: "Test 402 on root path"
+    url: "http://localhost:3402/"
+    method: GET
+    expect:
+      status: 402
+      headers:
+        - name: WWW-Authenticate
+          exists: true
+
+  # Test 15: Test nested path pricing
+  - name: "Test nested path with specific pricing"
+    url: "http://localhost:3402/api/v1/users/123"
+    method: GET
+    expect:
+      status: 402
+      invoice_amount: 0.01

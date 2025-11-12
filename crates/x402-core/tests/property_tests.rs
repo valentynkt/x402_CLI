@@ -6,8 +6,7 @@
 
 use proptest::prelude::*;
 use x402_core::policy::types::{PolicyConfig, PolicyRule};
-use x402_core::policy::engine::{PolicyEngine, Request};
-use x402_core::policy::runtime_types::{Policy, PolicyDecision, RateLimitConfig, SpendingCapConfig};
+use x402_core::policy::{RateLimitConfig, SpendingCapConfig};
 use std::time::{SystemTime, Duration};
 
 /// Property: Wildcard patterns should always match more broadly than exact matches
@@ -169,15 +168,15 @@ mod rate_limit_properties {
             }
 
             // Verify we're at the limit
-            let within_limit = !state.is_rate_limited(&config, now);
+            let _within_limit = state.check_limit(config.window, config.max_requests, now);
 
             // Adding more should exceed limit
             for _ in 0..extra_requests {
                 state.add_request(now);
             }
 
-            // Should now be rate limited
-            assert!(state.is_rate_limited(&config, now));
+            // Should now be rate limited (check_limit returns false when over limit)
+            assert!(!state.check_limit(config.window, config.max_requests, now));
         }
 
         /// Property: Requests outside window should not count toward limit
@@ -199,14 +198,14 @@ mod rate_limit_properties {
                 state.add_request(now);
             }
 
-            // Should be at limit
-            assert!(state.is_rate_limited(&config, now));
+            // Should be at limit (check_limit returns false when at/over limit)
+            assert!(!state.check_limit(config.window, config.max_requests, now));
 
             // After window expires
             let future = now + Duration::from_secs(window_secs + 1);
 
-            // Should no longer be rate limited
-            assert!(!state.is_rate_limited(&config, future));
+            // Should no longer be rate limited (check_limit returns true when allowed)
+            assert!(state.check_limit(config.window, config.max_requests, future));
         }
 
         /// Property: Rate limit state is monotonic within window
@@ -230,13 +229,13 @@ mod rate_limit_properties {
                 state.add_request(now);
             }
 
-            // Should be limited
-            assert!(state.is_rate_limited(&config, now));
+            // Should be limited (check_limit returns false when over limit)
+            assert!(!state.check_limit(config.window, config.max_requests, now));
 
             // Should remain limited shortly after
             if time_offset < window_secs {
                 let soon = now + Duration::from_secs(time_offset);
-                assert!(state.is_rate_limited(&config, soon));
+                assert!(!state.check_limit(config.window, config.max_requests, soon));
             }
         }
     }
@@ -363,7 +362,7 @@ mod policy_evaluation_properties {
         /// Property: Empty policy list should have deterministic behavior
         #[test]
         fn empty_policies_deterministic(agent_id in "[a-z]{5,10}") {
-            let config = PolicyConfig { policies: vec![] };
+            let _config = PolicyConfig { policies: vec![] };
 
             // Empty policies should behave consistently
             // (Implementation-dependent: might allow all or deny all)
@@ -384,7 +383,7 @@ mod policy_evaluation_properties {
         report.has_errors
     }
 
-    fn evaluate_with_empty_policies(agent_id: &str) -> bool {
+    fn evaluate_with_empty_policies(_agent_id: &str) -> bool {
         // Placeholder for actual evaluation
         // Default behavior (would need actual implementation)
         true // or false, depending on default policy
@@ -423,7 +422,7 @@ mod pattern_edge_cases {
             middle in "[a-z]{0,5}",
             suffix in "[a-z]{1,5}"
         ) {
-            let pattern = "*abc*def*";
+            let _pattern = "*abc*def*";
             let value = format!("{}abc{}def{}", prefix, middle, suffix);
 
             // Should match if contains abc...def in sequence

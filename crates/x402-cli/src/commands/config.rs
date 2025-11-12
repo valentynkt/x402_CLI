@@ -15,7 +15,7 @@ async fn show_config(args: &ConfigArgs) -> Result<()> {
     let cli_overrides = CliOverrides {
         port: args.port,
         solana_rpc: args.solana_rpc.clone(),
-        log_level: args.log_level.clone(),
+        log_level: args.log_level,
         pricing: None, // Story 2.2: Configurable pricing (not implemented yet)
     };
 

@@ -7,7 +7,6 @@ use assert_cmd::Command;
 use predicates::prelude::*;
 use tempfile::TempDir;
 use std::fs;
-use std::path::PathBuf;
 
 /// Helper to create a test command
 fn cli() -> Command {
@@ -57,8 +56,8 @@ fn test_config_show() {
         .assert()
         .success()
         .stdout(predicate::str::contains("Configuration"))
-        .stdout(predicate::str::contains("Network:"))
-        .stdout(predicate::str::contains("Port:"));
+        .stdout(predicate::str::contains("port:"))
+        .stdout(predicate::str::contains("solana_rpc:").or(predicate::str::contains("rpc:")));
 }
 
 /// Test: x402-dev config show with CLI overrides
@@ -153,9 +152,10 @@ policies:
         .args(&["policy", "validate", policy_path.to_str().unwrap()])
         .assert()
         .failure()
-        .stderr(predicate::str::contains("conflict").or(
+        .stdout(predicate::str::contains("CONFLICT").or(
             predicate::str::contains("ERROR")
-        ));
+        ))
+        .stderr(predicate::str::contains("Policy validation failed"));
 }
 
 /// Test: x402-dev policy generate creates Express middleware
@@ -313,8 +313,8 @@ fn test_policy_file_not_found() {
         .args(&["policy", "validate", "/nonexistent/policy.yaml"])
         .assert()
         .failure()
-        .stderr(predicate::str::contains("Failed to read").or(
-            predicate::str::contains("No such file")
+        .stderr(predicate::str::contains("I/O operation failed").or(
+            predicate::str::contains("entity not found")
         ));
 }
 

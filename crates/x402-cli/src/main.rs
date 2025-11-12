@@ -5,7 +5,7 @@ mod errors;
 
 use clap::Parser;
 use cli::{Cli, Commands};
-use commands::{config as config_cmd, init, mock, policy, version};
+use commands::{config as config_cmd, init, mock, policy, test, version};
 use errors::{convert_anyhow_to_cli_error, print_error};
 
 // ADR-002: Use multi-thread runtime (no V8 constraints in pure Rust)
@@ -15,10 +15,7 @@ async fn main() {
 
     let result = match cli.command {
         Commands::Mock(args) => mock::run(&args).await,
-        Commands::Test(_) => {
-            println!("Command 'test' not yet implemented - coming in Epic 3");
-            Ok(())
-        }
+        Commands::Test(args) => test::execute(&args).await,
         Commands::Verify(_) => {
             println!("Command 'verify' not yet implemented - coming in Epic 3");
             Ok(())

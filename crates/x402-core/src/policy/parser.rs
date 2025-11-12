@@ -24,43 +24,6 @@ impl PolicyParser {
     pub fn validate_policy(policy: &PolicyRule) -> Result<(), String> {
         // Use the built-in validate method from PolicyRule
         policy.validate()
-                if policy.field.is_none() {
-                    return Err("Allowlist/Denylist must have 'field' specified".to_string());
-                }
-                if policy.values.is_none() || policy.values.as_ref().unwrap().is_empty() {
-                    return Err("Allowlist/Denylist must have non-empty 'values'".to_string());
-                }
-            }
-            PolicyType::RateLimit => {
-                if policy.max_requests.is_none() {
-                    return Err("RateLimit must have 'max_requests' specified".to_string());
-                }
-                if policy.window_seconds.is_none() {
-                    return Err("RateLimit must have 'window_seconds' specified".to_string());
-                }
-                if policy.max_requests.unwrap() == 0 {
-                    return Err("RateLimit 'max_requests' must be > 0".to_string());
-                }
-                if policy.window_seconds.unwrap() == 0 {
-                    return Err("RateLimit 'window_seconds' must be > 0".to_string());
-                }
-            }
-            PolicyType::SpendingCap => {
-                if policy.max_amount.is_none() {
-                    return Err("SpendingCap must have 'max_amount' specified".to_string());
-                }
-                if policy.currency.is_none() {
-                    return Err("SpendingCap must have 'currency' specified".to_string());
-                }
-                if policy.window_seconds.is_none() {
-                    return Err("SpendingCap must have 'window_seconds' specified".to_string());
-                }
-                if policy.max_amount.unwrap() <= 0.0 {
-                    return Err("SpendingCap 'max_amount' must be > 0".to_string());
-                }
-            }
-        }
-        Ok(())
     }
 
     /// Validate entire policy document

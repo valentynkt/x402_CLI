@@ -218,7 +218,7 @@ const x402Middleware = (req, res, next) => {
                 if let Some(values) = &policy.values {
                     code.push_str("  // Allowlist policy check\n");
                     code.push_str(&format!("  const allowedAgents = {};\n",
-                        serde_json::to_string(values).unwrap()));
+                        serde_json::to_string(values).expect("Vec<String> should always serialize to JSON")));
                     let field = policy.field.as_deref().unwrap_or("agent_id");
                     code.push_str(&format!(
                         r#"  if (!allowedAgents.includes(agentId)) {{
@@ -235,7 +235,7 @@ const x402Middleware = (req, res, next) => {
                 if let Some(values) = &policy.values {
                     code.push_str("  // Denylist policy check\n");
                     code.push_str(&format!("  const deniedAgents = {};\n",
-                        serde_json::to_string(values).unwrap()));
+                        serde_json::to_string(values).expect("Vec<String> should always serialize to JSON")));
                     let field = policy.field.as_deref().unwrap_or("agent_id");
                     code.push_str(&format!(
                         r#"  if (deniedAgents.includes(agentId)) {{

@@ -2,23 +2,108 @@ use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::env;
+use std::fmt;
 use std::fs;
 use std::path::PathBuf;
+use std::str::FromStr;
+
+/// Log level for application logging
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+#[derive(Default)]
+pub enum LogLevel {
+    Error,
+    Warn,
+    #[default]
+    Info,
+    Debug,
+    Trace,
+}
+
+impl LogLevel {
+    /// Returns true if this level is at least as verbose as `other`
+    pub fn is_at_least(&self, other: LogLevel) -> bool {
+        use LogLevel::*;
+        let self_level = match self {
+            Error => 0,
+            Warn => 1,
+            Info => 2,
+            Debug => 3,
+            Trace => 4,
+        };
+        let other_level = match other {
+            Error => 0,
+            Warn => 1,
+            Info => 2,
+            Debug => 3,
+            Trace => 4,
+        };
+        self_level >= other_level
+    }
+}
+
+impl fmt::Display for LogLevel {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            LogLevel::Error => write!(f, "error"),
+            LogLevel::Warn => write!(f, "warn"),
+            LogLevel::Info => write!(f, "info"),
+            LogLevel::Debug => write!(f, "debug"),
+            LogLevel::Trace => write!(f, "trace"),
+        }
+    }
+}
+
+impl FromStr for LogLevel {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.to_lowercase().as_str() {
+            "error" => Ok(LogLevel::Error),
+            "warn" => Ok(LogLevel::Warn),
+            "info" => Ok(LogLevel::Info),
+            "debug" => Ok(LogLevel::Debug),
+            "trace" => Ok(LogLevel::Trace),
+            _ => Err(format!("Invalid log level: '{}'. Valid values: error, warn, info, debug, trace", s)),
+        }
+    }
+}
+
 
 /// Simulation mode for payment verification (Story 2.3)
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
+#[derive(Default)]
 pub enum SimulationMode {
+    #[default]
     Success,
     Failure,
     Timeout,
 }
 
-impl Default for SimulationMode {
-    fn default() -> Self {
-        SimulationMode::Success
+impl fmt::Display for SimulationMode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            SimulationMode::Success => write!(f, "success"),
+            SimulationMode::Failure => write!(f, "failure"),
+            SimulationMode::Timeout => write!(f, "timeout"),
+        }
     }
 }
+
+impl FromStr for SimulationMode {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.to_lowercase().as_str() {
+            "success" => Ok(SimulationMode::Success),
+            "fail" | "failure" => Ok(SimulationMode::Failure),
+            "timeout" => Ok(SimulationMode::Timeout),
+            _ => Err(format!("Invalid simulation mode: '{}'. Valid values: success, failure, timeout", s)),
+        }
+    }
+}
+
 
 /// Configuration schema for x402-dev
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -29,8 +114,8 @@ pub struct Config {
     #[serde(default = "default_solana_rpc")]
     pub solana_rpc: String,
 
-    #[serde(default = "default_log_level")]
-    pub log_level: String,
+    #[serde(default)]
+    pub log_level: LogLevel,
 
     #[serde(default)]
     pub pricing: PricingConfig,
@@ -51,10 +136,6 @@ fn default_solana_rpc() -> String {
     "https://api.devnet.solana.com".to_string()
 }
 
-fn default_log_level() -> String {
-    "info".to_string()
-}
-
 fn default_timeout_ms() -> u64 {
     5000
 }
@@ -64,7 +145,7 @@ impl Default for Config {
         Config {
             port: default_port(),
             solana_rpc: default_solana_rpc(),
-            log_level: default_log_level(),
+            log_level: LogLevel::default(),
             pricing: PricingConfig::default(),
             simulation_mode: SimulationMode::default(),
             timeout_delay_ms: default_timeout_ms(),
@@ -186,7 +267,7 @@ impl Config {
     pub fn merge(&mut self, other: Config) {
         self.port = other.port;
         self.solana_rpc = other.solana_rpc.clone();
-        self.log_level = other.log_level.clone();
+        self.log_level = other.log_level;
         self.pricing = other.pricing.clone();
         self.simulation_mode = other.simulation_mode;
         self.timeout_delay_ms = other.timeout_delay_ms;
@@ -210,14 +291,8 @@ impl Config {
             );
         }
 
-        // Validate log level
-        let valid_levels = ["error", "warn", "info", "debug", "trace"];
-        if !valid_levels.contains(&self.log_level.as_str()) {
-            anyhow::bail!(
-                "Invalid log level: {}. Must be one of: error, warn, info, debug, trace.\nFix: Set log_level to one of the valid values, e.g., info",
-                self.log_level
-            );
-        }
+        // Log level validation is now compile-time enforced by the LogLevel enum
+        // No runtime validation needed
 
         // Validate pricing configuration
         self.pricing.validate()?;
@@ -290,7 +365,7 @@ fn load_project_config() -> Result<Option<Config>> {
 pub struct CliOverrides {
     pub port: Option<u16>,
     pub solana_rpc: Option<String>,
-    pub log_level: Option<String>,
+    pub log_level: Option<LogLevel>,
     pub pricing: Option<f64>,
 }
 
@@ -308,7 +383,7 @@ impl Config {
         }
 
         if let Ok(level) = env::var("X402_DEV_LOG_LEVEL") {
-            self.log_level = level;
+            self.log_level = level.parse().map_err(|e: String| anyhow::anyhow!(e))?;
         }
 
         Ok(())
@@ -322,8 +397,8 @@ impl Config {
         if let Some(ref rpc) = cli.solana_rpc {
             self.solana_rpc = rpc.clone();
         }
-        if let Some(ref level) = cli.log_level {
-            self.log_level = level.clone();
+        if let Some(level) = cli.log_level {
+            self.log_level = level;
         }
         if let Some(pricing) = cli.pricing {
             self.pricing.default = pricing;
@@ -396,7 +471,7 @@ pub fn load_merged_config_with_sources(
             solana_rpc_source = "global (~/.x402dev/config.yaml)".to_string();
         }
         if global.log_level != defaults.log_level {
-            config.log_level = global.log_level.clone();
+            config.log_level = global.log_level;
             log_level_source = "global (~/.x402dev/config.yaml)".to_string();
         }
     }
@@ -412,7 +487,7 @@ pub fn load_merged_config_with_sources(
             solana_rpc_source = "project (.x402dev.yaml)".to_string();
         }
         if project.log_level != defaults.log_level {
-            config.log_level = project.log_level.clone();
+            config.log_level = project.log_level;
             log_level_source = "project (.x402dev.yaml)".to_string();
         }
     }
@@ -429,7 +504,7 @@ pub fn load_merged_config_with_sources(
         solana_rpc_source = "environment (X402_DEV_SOLANA_RPC)".to_string();
     }
     if let Ok(level) = env::var("X402_DEV_LOG_LEVEL") {
-        config.log_level = level;
+        config.log_level = level.parse().map_err(|e: String| anyhow::anyhow!(e))?;
         log_level_source = "environment (X402_DEV_LOG_LEVEL)".to_string();
     }
 
@@ -443,8 +518,8 @@ pub fn load_merged_config_with_sources(
             config.solana_rpc = rpc.clone();
             solana_rpc_source = "CLI flag (--solana-rpc)".to_string();
         }
-        if let Some(ref level) = cli.log_level {
-            config.log_level = level.clone();
+        if let Some(level) = cli.log_level {
+            config.log_level = level;
             log_level_source = "CLI flag (--log-level)".to_string();
         }
         if let Some(pricing) = cli.pricing {
@@ -594,5 +669,178 @@ mod tests {
         assert_eq!(matcher.get_price_for_path("/api/users"), 0.03);
         assert_eq!(matcher.get_price_for_path("/api/admin/users"), 0.20);
         assert_eq!(matcher.get_price_for_path("/api/admin/super/users"), 0.50);
+    }
+
+    // ============================================================================
+    // LogLevel Enum Tests
+    // ============================================================================
+
+    #[test]
+    fn test_log_level_from_str() {
+        assert_eq!("error".parse::<LogLevel>().unwrap(), LogLevel::Error);
+        assert_eq!("warn".parse::<LogLevel>().unwrap(), LogLevel::Warn);
+        assert_eq!("info".parse::<LogLevel>().unwrap(), LogLevel::Info);
+        assert_eq!("debug".parse::<LogLevel>().unwrap(), LogLevel::Debug);
+        assert_eq!("trace".parse::<LogLevel>().unwrap(), LogLevel::Trace);
+
+        // Case insensitive
+        assert_eq!("ERROR".parse::<LogLevel>().unwrap(), LogLevel::Error);
+        assert_eq!("Debug".parse::<LogLevel>().unwrap(), LogLevel::Debug);
+
+        // Invalid values
+        assert!("invalid".parse::<LogLevel>().is_err());
+        assert!("".parse::<LogLevel>().is_err());
+    }
+
+    #[test]
+    fn test_log_level_display() {
+        assert_eq!(LogLevel::Error.to_string(), "error");
+        assert_eq!(LogLevel::Warn.to_string(), "warn");
+        assert_eq!(LogLevel::Info.to_string(), "info");
+        assert_eq!(LogLevel::Debug.to_string(), "debug");
+        assert_eq!(LogLevel::Trace.to_string(), "trace");
+    }
+
+    #[test]
+    fn test_log_level_default() {
+        assert_eq!(LogLevel::default(), LogLevel::Info);
+    }
+
+    #[test]
+    fn test_log_level_comparison() {
+        // Test is_at_least method
+        assert!(LogLevel::Error.is_at_least(LogLevel::Error));
+        assert!(!LogLevel::Error.is_at_least(LogLevel::Warn));
+
+        assert!(LogLevel::Debug.is_at_least(LogLevel::Info));
+        assert!(LogLevel::Debug.is_at_least(LogLevel::Debug));
+        assert!(!LogLevel::Debug.is_at_least(LogLevel::Trace));
+
+        assert!(LogLevel::Trace.is_at_least(LogLevel::Error));
+        assert!(LogLevel::Trace.is_at_least(LogLevel::Trace));
+    }
+
+    #[test]
+    fn test_log_level_ordering() {
+        // Test that more verbose levels are "greater"
+        assert!(LogLevel::Trace.is_at_least(LogLevel::Error));
+        assert!(LogLevel::Debug.is_at_least(LogLevel::Warn));
+        assert!(LogLevel::Info.is_at_least(LogLevel::Error));
+        assert!(!LogLevel::Error.is_at_least(LogLevel::Info));
+    }
+
+    #[test]
+    fn test_log_level_serde() {
+        // Test serialization
+        let level = LogLevel::Debug;
+        let yaml = serde_yaml::to_string(&level).unwrap();
+        assert_eq!(yaml.trim(), "debug");
+
+        // Test deserialization
+        let yaml = "log_level: info\n";
+        #[derive(Deserialize)]
+        struct TestConfig {
+            log_level: LogLevel,
+        }
+        let config: TestConfig = serde_yaml::from_str(yaml).unwrap();
+        assert_eq!(config.log_level, LogLevel::Info);
+    }
+
+    // ============================================================================
+    // SimulationMode Enum Tests
+    // ============================================================================
+
+    #[test]
+    fn test_simulation_mode_from_str() {
+        assert_eq!("success".parse::<SimulationMode>().unwrap(), SimulationMode::Success);
+        assert_eq!("failure".parse::<SimulationMode>().unwrap(), SimulationMode::Failure);
+        assert_eq!("fail".parse::<SimulationMode>().unwrap(), SimulationMode::Failure); // Alias
+        assert_eq!("timeout".parse::<SimulationMode>().unwrap(), SimulationMode::Timeout);
+
+        // Case insensitive
+        assert_eq!("SUCCESS".parse::<SimulationMode>().unwrap(), SimulationMode::Success);
+        assert_eq!("Failure".parse::<SimulationMode>().unwrap(), SimulationMode::Failure);
+
+        // Invalid values
+        assert!("invalid".parse::<SimulationMode>().is_err());
+        assert!("".parse::<SimulationMode>().is_err());
+    }
+
+    #[test]
+    fn test_simulation_mode_display() {
+        assert_eq!(SimulationMode::Success.to_string(), "success");
+        assert_eq!(SimulationMode::Failure.to_string(), "failure");
+        assert_eq!(SimulationMode::Timeout.to_string(), "timeout");
+    }
+
+    #[test]
+    fn test_simulation_mode_default() {
+        assert_eq!(SimulationMode::default(), SimulationMode::Success);
+    }
+
+    #[test]
+    fn test_simulation_mode_serde() {
+        // Test serialization
+        let mode = SimulationMode::Failure;
+        let yaml = serde_yaml::to_string(&mode).unwrap();
+        assert_eq!(yaml.trim(), "failure");
+
+        // Test deserialization
+        let yaml = "simulation_mode: timeout\n";
+        #[derive(Deserialize)]
+        struct TestConfig {
+            simulation_mode: SimulationMode,
+        }
+        let config: TestConfig = serde_yaml::from_str(yaml).unwrap();
+        assert_eq!(config.simulation_mode, SimulationMode::Timeout);
+    }
+
+    // ============================================================================
+    // Config Integration Tests
+    // ============================================================================
+
+    #[test]
+    fn test_config_with_log_level_enum() {
+        let config = Config {
+            port: 8402,
+            solana_rpc: "https://api.devnet.solana.com".to_string(),
+            log_level: LogLevel::Debug,
+            pricing: PricingConfig::default(),
+            simulation_mode: SimulationMode::Success,
+            timeout_delay_ms: 5000,
+        };
+
+        assert_eq!(config.log_level, LogLevel::Debug);
+        assert_eq!(config.log_level.to_string(), "debug");
+    }
+
+    #[test]
+    fn test_config_yaml_serialization() {
+        let config = Config {
+            port: 8402,
+            solana_rpc: "https://api.devnet.solana.com".to_string(),
+            log_level: LogLevel::Info,
+            pricing: PricingConfig::default(),
+            simulation_mode: SimulationMode::Success,
+            timeout_delay_ms: 5000,
+        };
+
+        let yaml = serde_yaml::to_string(&config).unwrap();
+        assert!(yaml.contains("log_level: info"));
+        assert!(yaml.contains("simulation_mode: success"));
+    }
+
+    #[test]
+    fn test_config_yaml_deserialization() {
+        let yaml = r#"
+port: 8402
+solana_rpc: "https://api.devnet.solana.com"
+log_level: debug
+simulation_mode: failure
+timeout_delay_ms: 5000
+"#;
+        let config: Config = serde_yaml::from_str(yaml).unwrap();
+        assert_eq!(config.log_level, LogLevel::Debug);
+        assert_eq!(config.simulation_mode, SimulationMode::Failure);
     }
 }

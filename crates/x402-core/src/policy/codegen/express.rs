@@ -270,7 +270,7 @@ const x402Middleware = (req, res, next) => {
             PolicyRule::Allowlist { field: _, values } => {
                 code.push_str("  // Allowlist policy check\n");
                 code.push_str(&format!("  const allowedAgents = {};\n",
-                    serde_json::to_string(values).unwrap()));
+                    serde_json::to_string(values).expect("Vec<String> should always serialize to JSON")));
                 code.push_str(
                     r#"  if (!allowedAgents.includes(agentId)) {
     if (logPaymentAttempt) {
@@ -285,7 +285,7 @@ const x402Middleware = (req, res, next) => {
             PolicyRule::Denylist { field: _, values } => {
                 code.push_str("  // Denylist policy check\n");
                 code.push_str(&format!("  const deniedAgents = {};\n",
-                    serde_json::to_string(values).unwrap()));
+                    serde_json::to_string(values).expect("Vec<String> should always serialize to JSON")));
                 code.push_str(
                     r#"  if (deniedAgents.includes(agentId)) {
     if (logPaymentAttempt) {

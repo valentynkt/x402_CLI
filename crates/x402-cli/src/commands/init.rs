@@ -5,14 +5,14 @@ use std::fs;
 use std::path::PathBuf;
 
 use crate::cli::InitArgs;
-use crate::config::{Config, PricingConfig, SimulationMode};
+use crate::config::{Config, LogLevel, PricingConfig, SimulationMode};
 
 /// Configuration for YAML serialization (includes all fields)
 #[derive(Serialize)]
 struct ProjectConfig {
     port: u16,
     solana_rpc: String,
-    log_level: String,
+    log_level: LogLevel,
 }
 
 impl From<Config> for ProjectConfig {
@@ -80,14 +80,19 @@ pub async fn run(_args: &InitArgs) -> Result<()> {
     .to_string();
 
     // Log level selection
-    let log_levels = vec!["error", "warn", "info", "debug", "trace"];
+    let log_level_options = [LogLevel::Error,
+        LogLevel::Warn,
+        LogLevel::Info,
+        LogLevel::Debug,
+        LogLevel::Trace];
+    let log_level_display = vec!["error", "warn", "info", "debug", "trace"];
     let log_level_idx = Select::new()
         .with_prompt("Log level")
-        .items(&log_levels)
+        .items(&log_level_display)
         .default(2) // "info" is at index 2
         .interact()?;
 
-    let log_level = log_levels[log_level_idx].to_string();
+    let log_level = log_level_options[log_level_idx];
 
     // Create configuration
     let config = Config {

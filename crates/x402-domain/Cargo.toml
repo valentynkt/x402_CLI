@@ -1,0 +1,17 @@
+[package]
+name = "x402-domain"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+# Use Decimal instead of f64 for financial calculations
+rust_decimal = "1.33"
+# Serialization support
+serde = { workspace = true }
+serde_yaml = { workspace = true }
+# Error handling
+thiserror = "1.0"
+anyhow = { workspace = true }
+
+[dev-dependencies]
+serde_json = { workspace = true }
