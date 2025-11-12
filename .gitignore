@@ -45,6 +45,9 @@ claude-flow
 # BMAD Framework (local development only)
 bmad/
 
+# Hackathon research materials (local only)
+hackathon-research/
+
 # Claude Code local settings
 .claude/settings.local.json
 .claude/*.local.json
