@@ -3,9 +3,9 @@
 /// End-to-end integration tests for check and doctor commands.
 /// These tests verify the complete workflow from command invocation
 /// to output generation.
+
 // Helper functions for integration tests
 // Must be before test module to satisfy clippy::items_after_test_module
-
 #[allow(dead_code)]
 fn valid_config_json() -> String {
     r#"{

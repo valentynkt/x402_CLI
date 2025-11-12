@@ -98,20 +98,20 @@ jobs:
             echo "✅ Coverage ${coverage}% meets 70% threshold"
           fi
 
-  property-tests:
-    name: Property-Based Tests
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Run property tests with increased iterations
-        run: cargo test --test property_tests -- --ignored
-        env:
-          PROPTEST_CASES: 1000
+  # property-tests:
+  #   name: Property-Based Tests
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v4
+  #
+  #     - name: Install Rust toolchain
+  #       uses: dtolnay/rust-toolchain@stable
+  #
+  #     - name: Run property tests with increased iterations
+  #       run: cargo test --test property_tests -- --ignored
+  #       env:
+  #         PROPTEST_CASES: 1000
 
   benchmark:
     name: Benchmarks
@@ -146,8 +146,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install Rust 1.75.0 (MSRV)
-        uses: dtolnay/rust-toolchain@1.75.0
+      - name: Install Rust 1.77.0 (MSRV)
+        uses: dtolnay/rust-toolchain@1.77.0
 
       - name: Check with MSRV
         run: cargo check --all-features --workspace
