@@ -45,10 +45,7 @@ impl PolicyEngine {
         // Cleanup expired state before evaluation
         self.state.cleanup_expired(now);
 
-        // Track if any allow policy matched
-        let mut allow_matched = false;
-
-        // Evaluate policies in order
+        // Evaluate policies in order (highest priority first)
         for policy in &self.policies {
             // Check if policy applies to this request
             if !self.matches_patterns(&policy.agent_patterns, &request.agent_id) {
@@ -87,35 +84,30 @@ impl PolicyEngine {
                 }
             }
 
-            // Policy matched - check action
+            // Policy matched - return immediately (highest priority wins)
             match &policy.action {
                 PolicyAction::Deny(reason) => {
-                    // Fail-fast on deny
                     return Ok(PolicyDecision::Deny {
                         reason: reason.clone(),
                         policy_id: policy.id.clone(),
                     });
                 }
                 PolicyAction::Allow => {
-                    allow_matched = true;
                     // Update state for rate limiting and spending tracking
                     self.update_state(policy, request, now)?;
+                    // Return immediately on allow (priority wins)
+                    return Ok(PolicyDecision::Allow {
+                        policy_id: policy.id.clone(),
+                    });
                 }
             }
         }
 
-        // If at least one allow policy matched, allow the request
-        if allow_matched {
-            Ok(PolicyDecision::Allow {
-                policy_id: "default".to_string(),
-            })
-        } else {
-            // No policies matched - default deny
-            Ok(PolicyDecision::Deny {
-                reason: "No matching allow policy".to_string(),
-                policy_id: "default".to_string(),
-            })
-        }
+        // No policies matched - default deny
+        Ok(PolicyDecision::Deny {
+            reason: "No matching allow policy".to_string(),
+            policy_id: "default".to_string(),
+        })
     }
 
     /// Check if a value matches any pattern in the list

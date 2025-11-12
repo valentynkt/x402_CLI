@@ -22,25 +22,29 @@ impl PolicyState {
 
     /// Get or create rate limit state for a key
     pub fn get_rate_limit_state(&self, key: &str) -> RateLimitState {
-        let state = self.rate_limits.read().unwrap();
+        let state = self.rate_limits.read()
+            .expect("CRITICAL: Rate limit state lock poisoned - thread panic detected");
         state.get(key).cloned().unwrap_or_default()
     }
 
     /// Update rate limit state for a key
     pub fn update_rate_limit_state(&self, key: String, state: RateLimitState) {
-        let mut states = self.rate_limits.write().unwrap();
+        let mut states = self.rate_limits.write()
+            .expect("CRITICAL: Rate limit state lock poisoned - thread panic detected");
         states.insert(key, state);
     }
 
     /// Get or create spending state for a key
     pub fn get_spending_state(&self, key: &str) -> SpendingState {
-        let state = self.spending.read().unwrap();
+        let state = self.spending.read()
+            .expect("CRITICAL: Spending state lock poisoned - thread panic detected");
         state.get(key).cloned().unwrap_or_default()
     }
 
     /// Update spending state for a key
     pub fn update_spending_state(&self, key: String, state: SpendingState) {
-        let mut states = self.spending.write().unwrap();
+        let mut states = self.spending.write()
+            .expect("CRITICAL: Spending state lock poisoned - thread panic detected");
         states.insert(key, state);
     }
 
@@ -48,7 +52,8 @@ impl PolicyState {
     pub fn cleanup_expired(&self, now: SystemTime) {
         // Cleanup rate limits
         {
-            let mut states = self.rate_limits.write().unwrap();
+            let mut states = self.rate_limits.write()
+                .expect("CRITICAL: Rate limit state lock poisoned - thread panic detected");
             for state in states.values_mut() {
                 state.cleanup_expired(now);
             }
@@ -56,7 +61,8 @@ impl PolicyState {
 
         // Cleanup spending
         {
-            let mut states = self.spending.write().unwrap();
+            let mut states = self.spending.write()
+                .expect("CRITICAL: Spending state lock poisoned - thread panic detected");
             for state in states.values_mut() {
                 state.cleanup_expired(now);
             }
@@ -110,8 +116,9 @@ impl RateLimitState {
     /// Remove expired request timestamps outside the window
     pub fn cleanup_expired(&mut self, now: SystemTime) {
         // Keep only recent requests (last hour for safety margin)
+        // SECURITY: Also reject future timestamps to prevent time manipulation attacks
         let cutoff = now.checked_sub(Duration::from_secs(3600)).unwrap_or(now);
-        self.request_times.retain(|&time| time >= cutoff);
+        self.request_times.retain(|&time| time >= cutoff && time <= now);
     }
 
     /// Get current request count within window
@@ -119,7 +126,7 @@ impl RateLimitState {
         let window_start = now.checked_sub(window).unwrap_or(now);
         self.request_times
             .iter()
-            .filter(|&&time| time >= window_start)
+            .filter(|&&time| time >= window_start && time <= now)
             .count()
     }
 }
@@ -156,7 +163,7 @@ impl SpendingState {
 
         self.spending_records
             .iter()
-            .filter(|(time, _)| *time >= window_start)
+            .filter(|(time, _)| *time >= window_start && *time <= now)
             .map(|(_, amount)| amount)
             .sum()
     }
@@ -164,8 +171,9 @@ impl SpendingState {
     /// Remove expired spending records outside the window
     pub fn cleanup_expired(&mut self, now: SystemTime) {
         // Keep only recent records (last hour for safety margin)
+        // SECURITY: Also reject future timestamps to prevent time manipulation attacks
         let cutoff = now.checked_sub(Duration::from_secs(3600)).unwrap_or(now);
-        self.spending_records.retain(|(time, _)| *time >= cutoff);
+        self.spending_records.retain(|(time, _)| *time >= cutoff && *time <= now);
     }
 }
 
