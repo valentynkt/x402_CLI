@@ -38,6 +38,7 @@ build/
 .hive-mind/
 .swarm/
 memory/
+coordination/
 .mcp.json
 claude-flow
 
