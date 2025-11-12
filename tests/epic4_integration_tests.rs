@@ -3,10 +3,46 @@
 /// End-to-end integration tests for check and doctor commands.
 /// These tests verify the complete workflow from command invocation
 /// to output generation.
+// Helper functions for integration tests
+// Must be before test module to satisfy clippy::items_after_test_module
+
+#[allow(dead_code)]
+fn valid_config_json() -> String {
+    r#"{
+        "wallet": {
+            "type": "lnd",
+            "endpoint": "https://localhost:8080",
+            "macaroon_path": "/path/to/admin.macaroon",
+            "cert_path": "/path/to/tls.cert"
+        },
+        "server": {
+            "port": 3402,
+            "host": "127.0.0.1"
+        },
+        "policy": {
+            "default_amount": 1000,
+            "default_expiry": 3600
+        }
+    }"#
+    .to_string()
+}
+
+#[allow(dead_code)]
+fn valid_package_json() -> String {
+    r#"{
+        "name": "test-api",
+        "version": "1.0.0",
+        "dependencies": {
+            "x402-middleware": "^0.1.0"
+        }
+    }"#
+    .to_string()
+}
 
 #[cfg(test)]
 mod epic4_integration {
-    use std::process::Command;
+    // Tests are currently stubbed with TODOs
+    // use std::process::Command; // Uncomment when tests are implemented
 
     /// Integration Test 1: Check Command with Mock Server
     ///
@@ -372,41 +408,6 @@ mod epic4_integration {
         */
     }
 }
-
-// Helper functions for integration tests
-
-fn valid_config_json() -> String {
-    r#"{
-        "wallet": {
-            "type": "lnd",
-            "endpoint": "https://localhost:8080",
-            "macaroon_path": "/path/to/admin.macaroon",
-            "cert_path": "/path/to/tls.cert"
-        },
-        "server": {
-            "port": 3402,
-            "host": "127.0.0.1"
-        },
-        "policy": {
-            "default_amount": 1000,
-            "default_expiry": 3600
-        }
-    }"#
-    .to_string()
-}
-
-fn valid_package_json() -> String {
-    r#"{
-        "name": "test-api",
-        "version": "1.0.0",
-        "dependencies": {
-            "x402-middleware": "^0.1.0"
-        }
-    }"#
-    .to_string()
-}
-
-// Mock server helpers (to be implemented)
 // These will be replaced with actual implementations once integrated
 
 /*

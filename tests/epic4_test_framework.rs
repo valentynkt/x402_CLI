@@ -1,7 +1,6 @@
 /// Epic 4 Test Framework - Reusable test utilities and fixtures
 ///
 /// This module provides common test infrastructure for check and doctor commands.
-
 use std::net::TcpListener;
 use std::sync::Arc;
 use tokio::sync::Mutex;
@@ -32,10 +31,13 @@ impl TestEnvironment {
     }
 }
 
+/// Type alias to reduce complexity of handler type
+type ResponseHandler = Arc<Mutex<Option<Box<dyn Fn() -> MockResponse + Send>>>>;
+
 /// Mock HTTP server for testing check command
 pub struct MockHttpServer {
     port: u16,
-    handler: Arc<Mutex<Option<Box<dyn Fn() -> MockResponse + Send>>>>,
+    handler: ResponseHandler,
 }
 
 pub struct MockResponse {

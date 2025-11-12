@@ -5,10 +5,77 @@
 ///
 /// These tests are structured to be added to the check.rs command file
 /// once it's implemented.
+// Helper functions and types that will be used by tests once commands are implemented
+// Must be before test module to satisfy clippy::items_after_test_module
+
+/// Mock HTTP server builder for testing
+/// This will be moved to epic4_test_framework once integrated
+#[allow(dead_code)]
+struct MockHttpServer {
+    port: u16,
+}
+
+#[allow(dead_code)]
+struct MockResponse {
+    status: u16,
+    headers: Vec<(String, String)>,
+    body: String,
+}
+
+#[allow(dead_code)]
+impl MockHttpServer {
+    fn new() -> Result<Self, std::io::Error> {
+        Ok(Self { port: 0 })
+    }
+
+    fn url(&self) -> String {
+        format!("http://127.0.0.1:{}", self.port)
+    }
+
+    async fn with_response<F>(&self, _handler: F)
+    where
+        F: Fn() -> MockResponse,
+    {
+        // Implementation will be added when integrated
+    }
+
+    fn response_402_with_invoice() -> MockResponse {
+        MockResponse {
+            status: 402,
+            headers: vec![(
+                "WWW-Authenticate".to_string(),
+                r#"Lightning invoice="lnbc10n1pj9x7zspp5..." description="Test payment""#
+                    .to_string(),
+            )],
+            body: "Payment Required".to_string(),
+        }
+    }
+
+    fn response_200_ok() -> MockResponse {
+        MockResponse {
+            status: 200,
+            headers: vec![],
+            body: "OK".to_string(),
+        }
+    }
+
+    fn response_402_no_header() -> MockResponse {
+        MockResponse {
+            status: 402,
+            headers: vec![],
+            body: "Payment Required".to_string(),
+        }
+    }
+}
+
+#[allow(dead_code)]
+fn generate_test_invoice(_amount: u64) -> String {
+    "lnbc10n1pj9x7zspp5mock".to_string()
+}
 
 #[cfg(test)]
 mod check_command_tests {
-    use super::*;
+    // Tests are currently stubbed with TODOs
 
     /// Test 1: Validate HTTP 402 Status Detection
     ///
@@ -246,67 +313,4 @@ mod check_command_tests {
         //     assert_eq!(result.status, 402);
         // }
     }
-}
-
-// Helper functions that will be used by tests once commands are implemented
-
-/// Mock HTTP server builder for testing
-/// This will be moved to epic4_test_framework once integrated
-struct MockHttpServer {
-    port: u16,
-}
-
-struct MockResponse {
-    status: u16,
-    headers: Vec<(String, String)>,
-    body: String,
-}
-
-impl MockHttpServer {
-    fn new() -> Result<Self, std::io::Error> {
-        Ok(Self { port: 0 })
-    }
-
-    fn url(&self) -> String {
-        format!("http://127.0.0.1:{}", self.port)
-    }
-
-    async fn with_response<F>(&self, _handler: F)
-    where
-        F: Fn() -> MockResponse,
-    {
-        // Implementation will be added when integrated
-    }
-
-    fn response_402_with_invoice() -> MockResponse {
-        MockResponse {
-            status: 402,
-            headers: vec![(
-                "WWW-Authenticate".to_string(),
-                r#"Lightning invoice="lnbc10n1pj9x7zspp5..." description="Test payment""#
-                    .to_string(),
-            )],
-            body: "Payment Required".to_string(),
-        }
-    }
-
-    fn response_200_ok() -> MockResponse {
-        MockResponse {
-            status: 200,
-            headers: vec![],
-            body: "OK".to_string(),
-        }
-    }
-
-    fn response_402_no_header() -> MockResponse {
-        MockResponse {
-            status: 402,
-            headers: vec![],
-            body: "Payment Required".to_string(),
-        }
-    }
-}
-
-fn generate_test_invoice(_amount: u64) -> String {
-    "lnbc10n1pj9x7zspp5mock".to_string()
 }

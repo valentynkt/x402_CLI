@@ -6,9 +6,85 @@
 /// These tests are structured to be added to the doctor.rs command file
 /// once it's implemented.
 
+// Helper types and structures for tests
+// Must be before test module to satisfy clippy::items_after_test_module
+
+#[derive(Debug, PartialEq)]
+#[allow(dead_code)]
+enum CheckStatus {
+    Ok,
+    Warning,
+    Error,
+}
+
+#[derive(Debug, PartialEq)]
+#[allow(dead_code)]
+enum PortStatus {
+    Available,
+    InUse,
+}
+
+#[allow(dead_code)]
+struct TestEnvironment {
+    temp_dir: tempfile::TempDir,
+    config_path: std::path::PathBuf,
+}
+
+#[allow(dead_code)]
+impl TestEnvironment {
+    fn new() -> Result<Self, std::io::Error> {
+        let temp_dir = tempfile::tempdir()?;
+        let config_path = temp_dir.path().join("x402.config.json");
+        Ok(Self {
+            temp_dir,
+            config_path,
+        })
+    }
+
+    fn write_config(&self, config: &str) -> Result<(), std::io::Error> {
+        std::fs::write(&self.config_path, config)
+    }
+
+    fn write_package_json(&self, content: &str) -> Result<(), std::io::Error> {
+        let package_path = self.temp_dir.path().join("package.json");
+        std::fs::write(package_path, content)
+    }
+}
+
+#[allow(dead_code)]
+fn valid_config_json() -> String {
+    r#"{
+        "wallet": {
+            "type": "lnd",
+            "endpoint": "https://localhost:8080"
+        },
+        "server": {
+            "port": 3402
+        }
+    }"#
+    .to_string()
+}
+
+#[allow(dead_code)]
+fn invalid_config_json() -> String {
+    r#"{"invalid": "config"}"#.to_string()
+}
+
+#[allow(dead_code)]
+fn valid_package_json() -> String {
+    r#"{
+        "name": "test-api",
+        "version": "1.0.0",
+        "dependencies": {
+            "x402-middleware": "^0.1.0"
+        }
+    }"#
+    .to_string()
+}
+
 #[cfg(test)]
 mod doctor_command_tests {
-    use super::*;
+    // Tests are currently stubbed with TODOs
 
     /// Test 1: Environment Checking
     ///
@@ -339,72 +415,4 @@ mod doctor_command_tests {
         //     assert!(status.message.contains("permission"));
         // }
     }
-}
-
-// Helper types and structures for tests
-
-#[derive(Debug, PartialEq)]
-enum CheckStatus {
-    Ok,
-    Warning,
-    Error,
-}
-
-#[derive(Debug, PartialEq)]
-enum PortStatus {
-    Available,
-    InUse,
-}
-
-struct TestEnvironment {
-    temp_dir: tempfile::TempDir,
-    config_path: std::path::PathBuf,
-}
-
-impl TestEnvironment {
-    fn new() -> Result<Self, std::io::Error> {
-        let temp_dir = tempfile::tempdir()?;
-        let config_path = temp_dir.path().join("x402.config.json");
-        Ok(Self {
-            temp_dir,
-            config_path,
-        })
-    }
-
-    fn write_config(&self, config: &str) -> Result<(), std::io::Error> {
-        std::fs::write(&self.config_path, config)
-    }
-
-    fn write_package_json(&self, content: &str) -> Result<(), std::io::Error> {
-        let package_path = self.temp_dir.path().join("package.json");
-        std::fs::write(package_path, content)
-    }
-}
-
-fn valid_config_json() -> String {
-    r#"{
-        "wallet": {
-            "type": "lnd",
-            "endpoint": "https://localhost:8080"
-        },
-        "server": {
-            "port": 3402
-        }
-    }"#
-    .to_string()
-}
-
-fn invalid_config_json() -> String {
-    r#"{"invalid": "config"}"#.to_string()
-}
-
-fn valid_package_json() -> String {
-    r#"{
-        "name": "test-api",
-        "version": "1.0.0",
-        "dependencies": {
-            "x402-middleware": "^0.1.0"
-        }
-    }"#
-    .to_string()
 }
