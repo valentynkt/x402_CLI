@@ -214,6 +214,7 @@ timeout_delay_ms: 61000
 /// Returns configuration with environment-specific overrides
 ///
 /// Demonstrates configuration layering (global + project + env).
+#[allow(dead_code)]
 pub fn config_with_env_overrides() -> &'static str {
     r#"
 # Project configuration that can be overridden by environment variables:

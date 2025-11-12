@@ -4,7 +4,7 @@ use fs2::FileExt;
 use std::fs::{self, File};
 use std::path::PathBuf;
 use std::time::Duration;
-use sysinfo::{Pid, ProcessesToUpdate, System};
+use sysinfo::{Pid, System};
 
 // ============================================================================
 // Constants
@@ -82,11 +82,11 @@ pub fn delete_pid_file() -> Result<()> {
 /// Check if server is running by PID
 pub fn is_server_running(pid: u32) -> bool {
     let mut sys = System::new_all();
-    sys.refresh_processes(ProcessesToUpdate::All);
+    sys.refresh_processes();
 
     if let Some(process) = sys.process(Pid::from_u32(pid)) {
         // Check if it's actually our x402-dev process
-        let name = process.name().to_string_lossy();
+        let name = process.name();
         name.contains("x402-dev") || name.contains("mock")
     } else {
         false

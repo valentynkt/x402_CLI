@@ -16,7 +16,9 @@ enum ValidationResult {
     Valid,
     InvalidBase58,
     InvalidAmount,
+    #[allow(dead_code)]
     InvalidMemo,
+    #[allow(dead_code)]
     InvalidNetwork,
     InvalidTimestamp,
 }
@@ -54,16 +56,19 @@ fn valid_amount() -> impl Strategy<Value = u64> {
 }
 
 /// Generate invalid amounts (zero or boundary cases)
+#[allow(dead_code)]
 fn invalid_amount() -> impl Strategy<Value = u64> {
     prop_oneof![Just(0u64), Just(u64::MAX)]
 }
 
 /// Generate valid memo formats (req- prefix)
+#[allow(dead_code)]
 fn valid_memo() -> impl Strategy<Value = String> {
     "[a-zA-Z0-9]{8,32}".prop_map(|suffix| format!("req-{}", suffix))
 }
 
 /// Generate invalid memo formats (missing req- prefix)
+#[allow(dead_code)]
 fn invalid_memo() -> impl Strategy<Value = String> {
     "(?!req-)[a-zA-Z0-9]{8,32}".prop_map(|s| s)
 }

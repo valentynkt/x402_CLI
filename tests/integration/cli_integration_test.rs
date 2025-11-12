@@ -11,6 +11,7 @@ use std::net::TcpListener;
 use std::time::Duration;
 use tempfile::TempDir;
 use tokio::time::sleep;
+use wiremock::{matchers::method, Mock, MockServer, ResponseTemplate};
 
 /// Helper function to get a free port for testing
 fn get_free_port() -> u16 {
@@ -21,56 +22,93 @@ fn get_free_port() -> u16 {
         .port()
 }
 
-/// Helper function to start a mock 402 server in the background
-/// Returns the port it's running on
-async fn start_mock_server() -> Result<u16, Box<dyn std::error::Error>> {
-    let port = get_free_port();
+/// Helper to create a mock 402 server with wiremock
+/// Returns the URL to the mock server
+async fn setup_mock_402_server() -> MockServer {
+    let mock_server = MockServer::start().await;
 
-    // Start mock server in background
-    let mut cmd = Command::cargo_bin("x402-dev")?;
-    cmd.arg("mock")
-        .arg("--port")
-        .arg(port.to_string())
-        .timeout(Duration::from_secs(1));
+    // Mock 402 response with valid x402-solana WWW-Authenticate header
+    Mock::given(method("GET"))
+        .respond_with(
+            ResponseTemplate::new(402)
+                .insert_header(
+                    "WWW-Authenticate",
+                    "x402-solana recipient=5eykt4UsFv8P8NJdTREpY1vzqKqZKvdpKuc147dw2N9d amount=0.01 currency=USDC memo=req-test network=devnet"
+                )
+        )
+        .mount(&mock_server)
+        .await;
 
-    // Run in background by spawning the process
-    let _child = std::process::Command::new("cargo")
-        .args(&["run", "--bin", "x402-dev", "--", "mock", "--port", &port.to_string()])
-        .spawn()?;
-
-    // Wait for server to start
-    sleep(Duration::from_millis(500)).await;
-
-    Ok(port)
+    mock_server
 }
 
 #[tokio::test]
 async fn test_check_command_with_mock_server() {
-    // Start a mock 402 server
-    let port = match start_mock_server().await {
-        Ok(p) => p,
-        Err(_) => {
-            // Skip test if we can't start the server
-            return;
+    // Start a mock 402 server using wiremock (no process spawning needed)
+    let mock_server = setup_mock_402_server().await;
+    let url = format!("{}/api/data", mock_server.uri());
+
+    // Run check command against the mock server with retries
+    let max_retries = 3;
+    let mut last_error = None;
+
+    for attempt in 1..=max_retries {
+        let mut cmd = Command::cargo_bin("x402-dev").unwrap();
+        cmd.arg("check")
+            .arg(&url)
+            .timeout(Duration::from_secs(15));
+
+        let result = cmd.output();
+
+        match result {
+            Ok(output) if output.status.success() => {
+                let stdout = String::from_utf8_lossy(&output.stdout);
+
+                // Verify expected output
+                assert!(
+                    stdout.contains("x402 API Compliance Check"),
+                    "Expected 'x402 API Compliance Check' in output, got: {}",
+                    stdout
+                );
+                assert!(
+                    stdout.contains("Protocol Validation"),
+                    "Expected 'Protocol Validation' in output, got: {}",
+                    stdout
+                );
+
+                // Test passed!
+                return;
+            }
+            Ok(output) => {
+                last_error = Some(format!(
+                    "Command failed (attempt {}/{}): exit code {:?}\nstdout: {}\nstderr: {}",
+                    attempt,
+                    max_retries,
+                    output.status.code(),
+                    String::from_utf8_lossy(&output.stdout),
+                    String::from_utf8_lossy(&output.stderr)
+                ));
+            }
+            Err(e) => {
+                last_error = Some(format!(
+                    "Command execution failed (attempt {}/{}): {}",
+                    attempt, max_retries, e
+                ));
+            }
         }
-    };
 
-    // Give server time to fully start
-    sleep(Duration::from_millis(1000)).await;
+        // Wait before retry (except on last attempt)
+        if attempt < max_retries {
+            sleep(Duration::from_millis(500)).await;
+        }
+    }
 
-    let url = format!("http://localhost:{}/api/data", port);
-
-    // Run check command against the mock server
-    let mut cmd = Command::cargo_bin("x402-dev").unwrap();
-    cmd.arg("check")
-        .arg(&url)
-        .timeout(Duration::from_secs(15));
-
-    // The check should pass if server is running properly
-    // Should contain compliance check output
-    cmd.assert()
-        .stdout(predicate::str::contains("x402 API Compliance Check"))
-        .stdout(predicate::str::contains("Protocol Validation"));
+    // All retries failed
+    panic!(
+        "Test failed after {} attempts. Last error: {}",
+        max_retries,
+        last_error.unwrap_or_else(|| "Unknown error".to_string())
+    );
 }
 
 #[tokio::test]

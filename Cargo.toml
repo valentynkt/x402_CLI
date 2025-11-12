@@ -1,3 +1,43 @@
+[workspace]
+members = [
+    ".",
+    "crates/*",
+]
+resolver = "2"
+
+[workspace.dependencies]
+# Core libraries
+anyhow = "1.0"
+thiserror = "1.0"
+tokio = { version = "1.36", features = ["full"] }
+
+# CLI framework
+clap = { version = "4.4", features = ["derive", "cargo"] }
+
+# HTTP client and server
+reqwest = { version = "0.12", features = ["json"] }
+actix-web = "4.5"
+actix-cors = "0.7"
+actix-rt = "2.9"
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+serde_yaml = "0.9"
+
+# Utilities
+chrono = { version = "0.4", features = ["serde"] }
+uuid = { version = "1.10", features = ["v4", "serde"] }
+colored = "2.1"
+dialoguer = "0.11"
+directories = "5.0"
+semver = "1.0"
+
+# Process management
+sysinfo = "0.30"
+nix = { version = "0.28", features = ["process", "signal"] }
+fs2 = "0.4"
+
 [package]
 name = "mcp-server-starter"
 version = "1.0.0"
@@ -8,17 +48,17 @@ license = "MIT"
 
 [dependencies]
 # HTTP server framework
-actix-web = "4.5"
+actix-web = { workspace = true }
 
 # Async runtime
-tokio = { version = "1.36", features = ["full"] }
+tokio = { workspace = true }
 
 # JSON serialization
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
+serde = { workspace = true }
+serde_json = { workspace = true }
 
 # Date/time handling
-chrono = { version = "0.4", features = ["serde"] }
+chrono = { workspace = true }
 
 [profile.release]
 # Optimize for small binary size and fast compilation
