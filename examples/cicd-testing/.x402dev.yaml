@@ -1,0 +1,210 @@
+# x402-dev Configuration for CI/CD Testing
+# This configuration is optimized for automated testing in CI environments
+
+# Server Configuration
+server:
+  # Port for mock server (use 0 for auto-assign in CI)
+  port: 8402
+
+  # Host binding (use 0.0.0.0 for CI accessibility)
+  host: "127.0.0.1"
+
+  # Enable health check endpoint
+  health_check: true
+
+  # Graceful shutdown timeout
+  shutdown_timeout: 5
+
+# Solana Configuration
+solana:
+  # RPC endpoint (use devnet for CI testing)
+  rpc_url: "https://api.devnet.solana.com"
+
+  # Commitment level for transaction confirmation
+  commitment: "confirmed"
+
+  # Transaction timeout in seconds
+  timeout: 30
+
+  # Retry configuration
+  max_retries: 3
+  retry_delay: 1000  # milliseconds
+
+# Payment Configuration
+payment:
+  # Default payment amount (in lamports for SOL, or token smallest unit)
+  default_amount: 1000000  # 1 USDC (6 decimals)
+
+  # Supported tokens
+  supported_tokens:
+    - "USDC"
+    - "SOL"
+    - "USDT"
+
+  # Invoice configuration
+  invoice:
+    # Default TTL for invoices (in seconds)
+    ttl: 300  # 5 minutes
+
+    # Minimum payment amount
+    min_amount: 100000  # 0.1 USDC
+
+    # Maximum payment amount
+    max_amount: 1000000000  # 1000 USDC
+
+  # Webhook configuration
+  webhooks:
+    enabled: true
+    retry_attempts: 3
+    timeout: 10
+
+# Logging Configuration
+logging:
+  # Log level: trace, debug, info, warn, error
+  level: "info"
+
+  # Log format: json, pretty
+  format: "pretty"
+
+  # Log file path (optional, for CI artifact collection)
+  file: "/tmp/x402-mock.log"
+
+  # Enable access logs
+  access_logs: true
+
+# Mock Server Configuration
+mock:
+  # Enable mock mode (simulates Solana transactions)
+  enabled: true
+
+  # Mock payment success rate (0.0 to 1.0)
+  success_rate: 1.0
+
+  # Simulate network delays (milliseconds)
+  network_delay: 0
+
+  # Mock wallet configuration
+  wallet:
+    # Use deterministic keypair for testing
+    seed: "test-seed-for-ci-deterministic-wallet"
+
+    # Initial balance (in lamports)
+    initial_balance: 10000000000  # 10 SOL
+
+# Rate Limiting
+rate_limit:
+  # Enable rate limiting
+  enabled: true
+
+  # Requests per window
+  max_requests: 100
+
+  # Time window in seconds
+  window: 60
+
+  # Strategy: fixed_window, sliding_window
+  strategy: "sliding_window"
+
+# Security Configuration
+security:
+  # Enable CORS
+  cors:
+    enabled: true
+    allowed_origins:
+      - "*"  # Allow all in test environment
+    allowed_methods:
+      - "GET"
+      - "POST"
+      - "OPTIONS"
+    allowed_headers:
+      - "Content-Type"
+      - "Authorization"
+      - "X-Invoice-ID"
+
+  # API key authentication (disabled for testing)
+  api_keys:
+    enabled: false
+
+  # Signature verification
+  verify_signatures: true
+
+# Testing Configuration
+testing:
+  # Enable test mode features
+  test_mode: true
+
+  # Reset state between tests
+  auto_reset: true
+
+  # Store test artifacts
+  artifact_dir: "/tmp/x402-artifacts"
+
+  # Enable detailed error messages
+  verbose_errors: true
+
+# Performance Configuration
+performance:
+  # Maximum concurrent connections
+  max_connections: 1000
+
+  # Request timeout (seconds)
+  request_timeout: 30
+
+  # Keep-alive timeout (seconds)
+  keepalive_timeout: 60
+
+  # Enable request buffering
+  buffer_requests: true
+
+# Database Configuration (for persistent storage)
+database:
+  # Database type: memory, sqlite, postgres
+  type: "memory"  # Use in-memory for CI speed
+
+  # Connection pool size
+  pool_size: 10
+
+  # Connection timeout
+  connection_timeout: 5
+
+# Monitoring Configuration
+monitoring:
+  # Enable metrics collection
+  enabled: true
+
+  # Metrics endpoint
+  endpoint: "/metrics"
+
+  # Metrics format: prometheus, json
+  format: "json"
+
+# CI/CD Specific Settings
+ci:
+  # Disable interactive prompts
+  non_interactive: true
+
+  # Exit on first error
+  fail_fast: false
+
+  # Generate test reports
+  generate_reports: true
+
+  # Report output format
+  report_format: "json"
+
+  # Report output path
+  report_path: "test-results.json"
+
+# Feature Flags
+features:
+  # Enable experimental features
+  experimental: false
+
+  # Enable webhook support
+  webhooks: true
+
+  # Enable multi-currency support
+  multi_currency: true
+
+  # Enable refund processing
+  refunds: true

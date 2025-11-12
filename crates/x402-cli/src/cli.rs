@@ -147,8 +147,8 @@ pub struct VerifyArgs {
 #[derive(Args)]
 #[command(after_help = "\
 EXAMPLES:
-  x402-dev check
-  x402-dev check --verbose
+  x402-dev check http://localhost:3402/api/data
+  x402-dev check http://localhost:3402/api/data --format json
 
 SEE ALSO:
   x402-dev doctor    Diagnose and fix issues
@@ -156,7 +156,12 @@ SEE ALSO:
   x402-dev verify    Verify protocol compliance
 ")]
 pub struct CheckArgs {
-    // Epic 4: Health check arguments
+    /// URL to check for x402 compliance
+    pub url: String,
+
+    /// Output format (text or json)
+    #[arg(long, default_value = "text")]
+    pub format: String,
 }
 
 #[derive(Args)]
@@ -187,7 +192,11 @@ SEE ALSO:
   x402-dev init      Initialize new project
 ")]
 pub struct ExamplesArgs {
-    // Epic 6: Example display arguments
+    /// Subcommand: list, info, or init
+    pub command: Option<String>,
+
+    /// Example name (for info and init commands)
+    pub name: Option<String>,
 }
 
 #[derive(Args)]

@@ -1,0 +1,273 @@
+# x402 Payment Integration Test Suite
+# This suite covers core payment flows, error handling, and edge cases
+
+metadata:
+  name: "x402 Core Payment Tests"
+  description: "Comprehensive test suite for x402 payment protocol"
+  version: "1.0.0"
+  timeout: 30  # Default timeout in seconds
+  retry: 2     # Retry failed tests twice
+
+# Global configuration
+config:
+  base_url: "http://localhost:8402"
+  default_headers:
+    Content-Type: "application/json"
+    User-Agent: "x402-test-suite/1.0"
+
+tests:
+  # ============================================
+  # HAPPY PATH TESTS
+  # ============================================
+
+  - name: "Happy path - successful payment flow"
+    description: "Basic payment flow with valid invoice generation"
+    endpoint: /api/premium/data
+    method: GET
+    expected_status: 402
+    verify:
+      - invoice_present
+      - valid_invoice_format
+      - correct_amount
+    assertions:
+      - path: "headers.x-invoice-id"
+        exists: true
+      - path: "headers.x-payment-amount"
+        equals: "1000000"  # 1 USDC
+      - path: "headers.x-payment-token"
+        equals: "USDC"
+
+  - name: "Payment with custom amount"
+    description: "Verify custom payment amounts are handled correctly"
+    endpoint: /api/data/large
+    method: GET
+    headers:
+      X-Requested-Amount: "5000000"
+    expected_status: 402
+    verify:
+      - invoice_present
+    assertions:
+      - path: "headers.x-payment-amount"
+        equals: "5000000"  # 5 USDC
+
+  - name: "Payment verification success"
+    description: "Complete payment flow with verification"
+    endpoint: /api/data
+    method: GET
+    payment:
+      amount: 1000000
+      token: "USDC"
+      auto_pay: true
+    expected_status: 200
+    verify:
+      - payment_accepted
+      - data_returned
+    assertions:
+      - path: "status"
+        equals: "success"
+
+  # ============================================
+  # ERROR HANDLING TESTS
+  # ============================================
+
+  - name: "Invalid payment amount rejection"
+    description: "Verify negative amounts are rejected"
+    endpoint: /api/data
+    method: GET
+    payment:
+      amount: -100
+      token: "USDC"
+    expected_status: 400
+    verify:
+      - error_message_present
+    assertions:
+      - path: "error"
+        contains: "invalid amount"
+
+  - name: "Unsupported token rejection"
+    description: "Reject payments with unsupported tokens"
+    endpoint: /api/data
+    method: GET
+    payment:
+      amount: 1000000
+      token: "UNKNOWN_TOKEN"
+    expected_status: 400
+    verify:
+      - error_message_present
+    assertions:
+      - path: "error"
+        contains: "unsupported token"
+
+  - name: "Expired invoice handling"
+    description: "Verify expired invoices are rejected"
+    endpoint: /api/data
+    method: GET
+    invoice_config:
+      ttl: 1  # 1 second
+    wait: 3   # Wait 3 seconds before payment
+    payment:
+      amount: 1000000
+      token: "USDC"
+    expected_status: 410
+    verify:
+      - invoice_expired
+    assertions:
+      - path: "error"
+        contains: "expired"
+
+  - name: "Duplicate payment prevention"
+    description: "Ensure same invoice cannot be paid twice"
+    endpoint: /api/data
+    method: GET
+    steps:
+      - request:
+          method: GET
+        capture:
+          invoice_id: "headers.x-invoice-id"
+      - request:
+          method: POST
+          endpoint: /api/pay
+          body:
+            invoice_id: "{{ invoice_id }}"
+        expected_status: 200
+      - request:
+          method: POST
+          endpoint: /api/pay
+          body:
+            invoice_id: "{{ invoice_id }}"
+        expected_status: 409
+        verify:
+          - duplicate_payment_error
+
+  # ============================================
+  # EDGE CASES
+  # ============================================
+
+  - name: "Concurrent payment attempts"
+    description: "Handle multiple simultaneous payment requests"
+    endpoint: /api/data
+    method: GET
+    concurrent: 5  # 5 simultaneous requests
+    expected_status: 402
+    verify:
+      - unique_invoices  # Each should get unique invoice
+    assertions:
+      - path: "headers.x-invoice-id"
+        unique: true
+
+  - name: "Large payload handling"
+    description: "Verify system handles large response payloads"
+    endpoint: /api/data/bulk
+    method: GET
+    payment:
+      amount: 1000000
+      token: "USDC"
+      auto_pay: true
+    expected_status: 200
+    verify:
+      - payload_size_valid
+    assertions:
+      - path: "data.items.length"
+        greater_than: 1000
+
+  - name: "Network timeout recovery"
+    description: "Handle slow network conditions gracefully"
+    endpoint: /api/data/slow
+    method: GET
+    network_delay: 5000  # 5 second delay
+    timeout: 10000       # 10 second timeout
+    expected_status: 200
+    verify:
+      - request_completed
+
+  - name: "Rate limiting enforcement"
+    description: "Verify rate limits are applied correctly"
+    endpoint: /api/data
+    method: GET
+    rate_limit:
+      requests: 10
+      window: 60  # 10 requests per 60 seconds
+    repeat: 15    # Try 15 requests
+    expected_outcomes:
+      - count: 10
+        status: 402
+      - count: 5
+        status: 429  # Rate limited
+    verify:
+      - rate_limit_active
+
+  # ============================================
+  # WEBHOOK & CALLBACK TESTS
+  # ============================================
+
+  - name: "Payment webhook notification"
+    description: "Verify webhooks are triggered on payment"
+    endpoint: /api/data
+    method: GET
+    payment:
+      amount: 1000000
+      token: "USDC"
+      auto_pay: true
+    webhook:
+      url: "http://localhost:9000/webhook"
+      expected_events:
+        - "invoice.created"
+        - "payment.received"
+        - "payment.verified"
+    expected_status: 200
+    verify:
+      - all_webhooks_received
+
+  # ============================================
+  # SECURITY TESTS
+  # ============================================
+
+  - name: "Invoice tampering detection"
+    description: "Detect and reject tampered invoice data"
+    endpoint: /api/data
+    method: GET
+    steps:
+      - request:
+          method: GET
+        capture:
+          invoice_id: "headers.x-invoice-id"
+          signature: "headers.x-invoice-signature"
+      - request:
+          method: POST
+          endpoint: /api/pay
+          body:
+            invoice_id: "{{ invoice_id }}"
+            signature: "tampered_signature_123"
+        expected_status: 403
+        verify:
+          - signature_validation_failed
+
+  - name: "Replay attack prevention"
+    description: "Prevent replay attacks with same signature"
+    endpoint: /api/data
+    method: GET
+    steps:
+      - request:
+          method: GET
+        capture:
+          invoice: "body"
+      - request:
+          method: POST
+          endpoint: /api/pay
+          body: "{{ invoice }}"
+        expected_status: 200
+      - request:
+          method: POST
+          endpoint: /api/pay
+          body: "{{ invoice }}"
+          wait: 60  # Wait 1 minute
+        expected_status: 403
+        verify:
+          - replay_attack_blocked
+
+# Test execution configuration
+execution:
+  parallel: true
+  fail_fast: false
+  report_format: "json"
+  verbose: true

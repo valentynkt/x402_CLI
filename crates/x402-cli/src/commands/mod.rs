@@ -1,4 +1,7 @@
+pub mod check;
 pub mod config;
+pub mod doctor;
+pub mod examples;
 pub mod init;
 pub mod invoice;
 pub mod mock;

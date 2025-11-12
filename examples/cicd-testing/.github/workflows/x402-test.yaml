@@ -1,0 +1,298 @@
+name: x402 Payment Tests
+
+# Trigger on all pushes and pull requests
+# Customize this to match your workflow needs
+on:
+  push:
+    branches: ['**']
+  pull_request:
+    branches: [main, master, develop]
+  # Optional: Run tests on a schedule (daily at 2 AM UTC)
+  # schedule:
+  #   - cron: '0 2 * * *'
+
+# Prevent concurrent runs on the same branch
+concurrency:
+  group: x402-tests-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  RUST_BACKTRACE: 1
+  RUST_LOG: info
+  CARGO_TERM_COLOR: always
+
+jobs:
+  # Main test job
+  x402-integration-tests:
+    name: x402 Payment Integration Tests
+    runs-on: ubuntu-latest
+
+    # Set a timeout to prevent runaway jobs
+    timeout-minutes: 15
+
+    steps:
+      # ============================================
+      # SETUP PHASE
+      # ============================================
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          # Fetch full history for better debugging
+          fetch-depth: 0
+
+      - name: Install Rust toolchain
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: stable
+          components: rustfmt, clippy
+          # Cache Rust dependencies for faster builds
+          cache: true
+
+      # Cache x402-dev binary to avoid rebuilding on every run
+      - name: Cache x402-dev binary
+        id: cache-x402
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/bin/x402-dev
+          key: x402-dev-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            x402-dev-${{ runner.os }}-
+
+      - name: Install x402-dev
+        if: steps.cache-x402.outputs.cache-hit != 'true'
+        run: |
+          echo "Installing x402-dev from source..."
+          cargo install x402-dev --locked
+          echo "x402-dev installed successfully"
+
+      - name: Verify x402-dev installation
+        run: |
+          x402-dev --version
+          which x402-dev
+
+      # ============================================
+      # MOCK SERVER PHASE
+      # ============================================
+
+      - name: Start x402 mock server
+        id: mock-server
+        run: |
+          echo "Starting x402 mock server in background..."
+
+          # Start mock server and capture PID
+          x402-dev mock start \
+            --config .x402dev.yaml \
+            --background \
+            --log-file /tmp/x402-mock.log &
+
+          MOCK_PID=$!
+          echo "mock_pid=$MOCK_PID" >> $GITHUB_OUTPUT
+          echo "Mock server started with PID: $MOCK_PID"
+
+          # Wait for server to be ready (max 30 seconds)
+          echo "Waiting for mock server to be ready..."
+          timeout 30 bash -c 'until curl -sf http://localhost:8402/health; do sleep 1; done' || {
+            echo "Error: Mock server failed to start"
+            cat /tmp/x402-mock.log
+            exit 1
+          }
+
+          echo "Mock server is ready and accepting connections"
+        continue-on-error: false
+
+      - name: Verify mock server health
+        run: |
+          echo "Checking mock server health endpoint..."
+          curl -v http://localhost:8402/health
+
+          echo "Mock server status:"
+          ps aux | grep x402-dev || true
+
+      # ============================================
+      # TEST EXECUTION PHASE
+      # ============================================
+
+      - name: Run x402 test suite
+        id: run-tests
+        run: |
+          echo "Executing x402 payment integration tests..."
+
+          # Run test suite with detailed output
+          x402-dev test run \
+            --suite tests/suite.yaml \
+            --config .x402dev.yaml \
+            --output-format json \
+            --output-file test-results.json \
+            --verbose
+
+          echo "Test suite completed"
+        continue-on-error: true
+
+      - name: Display test results
+        if: always()
+        run: |
+          echo "=== Test Results Summary ==="
+
+          if [ -f test-results.json ]; then
+            # Pretty-print JSON results
+            cat test-results.json | jq '.summary'
+
+            # Extract pass/fail counts
+            TOTAL=$(cat test-results.json | jq '.summary.total')
+            PASSED=$(cat test-results.json | jq '.summary.passed')
+            FAILED=$(cat test-results.json | jq '.summary.failed')
+
+            echo "Total tests: $TOTAL"
+            echo "Passed: $PASSED"
+            echo "Failed: $FAILED"
+
+            # Display failed tests if any
+            if [ "$FAILED" -gt 0 ]; then
+              echo ""
+              echo "=== Failed Tests ==="
+              cat test-results.json | jq '.tests[] | select(.status == "failed")'
+            fi
+          else
+            echo "Warning: test-results.json not found"
+          fi
+
+      # ============================================
+      # CLEANUP PHASE
+      # ============================================
+
+      - name: Stop mock server
+        if: always()
+        run: |
+          echo "Stopping x402 mock server..."
+
+          # Try graceful shutdown first
+          x402-dev mock stop || true
+
+          # Force kill if still running
+          if [ -n "${{ steps.mock-server.outputs.mock_pid }}" ]; then
+            kill ${{ steps.mock-server.outputs.mock_pid }} 2>/dev/null || true
+            sleep 2
+            kill -9 ${{ steps.mock-server.outputs.mock_pid }} 2>/dev/null || true
+          fi
+
+          echo "Mock server stopped"
+
+      - name: Collect logs
+        if: always()
+        run: |
+          echo "=== Mock Server Logs ==="
+          if [ -f /tmp/x402-mock.log ]; then
+            cat /tmp/x402-mock.log
+          else
+            echo "No mock server logs found"
+          fi
+
+      # ============================================
+      # REPORTING PHASE
+      # ============================================
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: x402-test-results-${{ github.run_number }}
+          path: |
+            test-results.json
+            /tmp/x402-mock.log
+          retention-days: 30
+
+      - name: Upload test artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: x402-test-artifacts-${{ github.run_number }}
+          path: |
+            .x402dev.yaml
+            tests/suite.yaml
+          retention-days: 7
+
+      # Comment on PR with test results (optional)
+      - name: Comment PR with results
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+
+            if (!fs.existsSync('test-results.json')) {
+              console.log('No test results file found');
+              return;
+            }
+
+            const results = JSON.parse(fs.readFileSync('test-results.json', 'utf8'));
+            const { total, passed, failed } = results.summary;
+
+            const status = failed === 0 ? '✅' : '❌';
+            const comment = `## ${status} x402 Payment Tests
+
+            **Summary:**
+            - Total: ${total}
+            - Passed: ${passed} ✅
+            - Failed: ${failed} ❌
+
+            ${failed > 0 ? `**Failed Tests:**\n${results.tests.filter(t => t.status === 'failed').map(t => `- ${t.name}`).join('\n')}` : ''}
+
+            [View full results](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            `;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+
+      # ============================================
+      # FINAL STATUS CHECK
+      # ============================================
+
+      - name: Check test results
+        if: always()
+        run: |
+          if [ -f test-results.json ]; then
+            FAILED=$(cat test-results.json | jq '.summary.failed')
+            if [ "$FAILED" -gt 0 ]; then
+              echo "Error: $FAILED test(s) failed"
+              exit 1
+            fi
+          else
+            echo "Error: No test results found"
+            exit 1
+          fi
+
+          echo "All tests passed successfully!"
+
+  # Optional: Run linting on test files
+  lint-test-suite:
+    name: Lint Test Suite
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate YAML files
+        run: |
+          # Install yamllint
+          pip install yamllint
+
+          # Lint configuration and test files
+          yamllint .x402dev.yaml tests/suite.yaml .github/workflows/x402-test.yaml
+
+      - name: Validate test suite schema
+        run: |
+          # Check for common issues in test suite
+          echo "Validating test suite structure..."
+
+          if ! grep -q "tests:" tests/suite.yaml; then
+            echo "Error: Missing 'tests:' key in suite.yaml"
+            exit 1
+          fi
+
+          echo "Test suite validation passed"

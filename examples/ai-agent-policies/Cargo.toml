@@ -1,0 +1,22 @@
+[package]
+name = "ai-agent-policies"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+# HTTP client for making API requests
+reqwest = { version = "0.11", features = ["json"] }
+
+# Async runtime
+tokio = { version = "1.35", features = ["full"] }
+
+# Serialization for policy configuration
+serde = { version = "1.0", features = ["derive"] }
+serde_yaml = "0.9"
+
+# JSON handling for API responses
+serde_json = "1.0"
+
+[[bin]]
+name = "agent"
+path = "agent.rs"

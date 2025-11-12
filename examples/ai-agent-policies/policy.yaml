@@ -1,0 +1,52 @@
+# x402 AI Agent Policy Configuration
+# Version 1.0
+
+version: "1.0"
+
+# SPENDING CAP: Limit total spending per time period
+# WHY: Prevents runaway costs from AI agents making unlimited API calls
+# EXAMPLE: An AI agent that makes 1000 unintended calls could cost $100+
+#          With a $10 daily cap, costs are automatically limited
+spending_cap:
+  max_amount: 10.0        # Maximum spending allowed
+  currency: USDC          # Currency for spending (USDC, PYUSD, etc.)
+  period: daily           # Time window: hourly, daily, monthly
+
+# ALLOWLIST: Restrict which endpoints can be accessed
+# WHY: Prevents access to unauthorized or expensive services
+# EXAMPLE: An AI agent should only call /api/data and /api/ai-query
+#          Attempts to call /api/admin or external services are blocked
+allowlist:
+  endpoints:
+    - /api/data           # Data retrieval endpoint
+    - /api/ai-query       # AI model query endpoint
+    # Add more allowed endpoints here
+    # Supports wildcards: /api/* allows all /api/ paths
+
+# RATE LIMIT: Control request frequency
+# WHY: Prevents abuse and manages costs through request throttling
+# EXAMPLE: Without rate limits, an agent could make 100 req/sec ($$$)
+#          With 10 req/min limit, costs are predictable and controlled
+rate_limit:
+  requests_per_minute: 10  # Maximum requests allowed per minute
+
+# ADDITIONAL POLICY OPTIONS (for advanced use cases)
+#
+# Per-endpoint spending limits:
+# endpoint_limits:
+#   /api/expensive-model:
+#     max_amount: 1.0
+#     currency: USDC
+#
+# Time-based restrictions:
+# time_restrictions:
+#   allowed_hours:
+#     - 9-17  # Only allow requests 9 AM - 5 PM
+#   timezone: UTC
+#
+# Per-user/tenant limits:
+# tenant_limits:
+#   default:
+#     max_amount: 10.0
+#   premium:
+#     max_amount: 100.0
