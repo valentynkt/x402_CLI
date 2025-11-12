@@ -29,3 +29,51 @@ strip = true
 
 [dev-dependencies]
 tempfile = "3.23.0"
+
+# CLI testing framework
+assert_cmd = "2.0"
+predicates = "3.1"
+
+# HTTP mocking for tests
+wiremock = "0.6"
+reqwest = { version = "0.12", features = ["json"] }
+
+# Property-based testing
+proptest = "1.4"
+
+# Snapshot testing
+insta = { version = "1.39", features = ["yaml"] }
+
+# Test utilities
+pretty_assertions = "1.4"
+
+# YAML parsing for policy tests
+serde_yaml = "0.9"
+
+# Additional dependencies for test fixtures
+uuid = { version = "1.10", features = ["v4"] }
+rand = "0.8"
+
+[[test]]
+name = "invoice_properties_test"
+path = "tests/property/invoice_properties_test.rs"
+
+[[test]]
+name = "policy_properties_test"
+path = "tests/property/policy_properties_test.rs"
+
+[[test]]
+name = "doctor_command_test"
+path = "crates/x402-cli/tests/unit/doctor_command_test.rs"
+
+[[test]]
+name = "check_command_test"
+path = "crates/x402-cli/tests/unit/check_command_test.rs"
+
+[[test]]
+name = "integration"
+path = "tests/integration/mod.rs"
+
+[[test]]
+name = "fixtures_test"
+path = "tests/unit/fixtures_test.rs"

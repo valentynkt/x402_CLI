@@ -1,8 +1,10 @@
-# Quick Start Guide: Hello World in 90 Seconds
+# Quick Start Guide: Test Your First 402 Endpoint in 90 Seconds
 
 **Time:** 10 minutes (detailed walkthrough) | **Difficulty:** Beginner | **Prerequisites:** Rust 1.75+
 
-This guide walks you through creating your first payment-protected API with x402-dev. By the end, you'll have a working server that returns HTTP 402 status codes with Solana payment invoices.
+This guide walks you through setting up x402-dev's mock payment server for testing. By the end, you'll have a working test environment that returns HTTP 402 status codes with mock invoices.
+
+⚠️ **Important:** x402-dev is a **TESTING TOOLKIT**. It does NOT process real payments or connect to the Solana blockchain. For production use, you must integrate real payment verification separately.
 
 ---
 
@@ -15,8 +17,6 @@ Before starting, ensure you have:
 - ✅ **Terminal/command line** access
 - ✅ **curl** or similar HTTP client for testing
 - ✅ **5 minutes** of uninterrupted time
-
-**Don't need blockchain knowledge** - x402-dev handles everything!
 
 ---
 
@@ -50,17 +50,17 @@ x402-dev --version
 
 ## Step 2: Initialize Your Project (15 seconds)
 
-Create a new directory for your API:
+Create a new directory for your test environment:
 
 ```bash
-x402-dev init my-payment-api
-cd my-payment-api
+x402-dev init my-payment-test
+cd my-payment-test
 ```
 
 **What just happened:**
 - ✅ Created `.x402dev.yaml` configuration file
-- ✅ Set default port (3402) and pricing (0.000001 SOL)
-- ✅ Configured Solana devnet (free testing network)
+- ✅ Set default port (3402) and pricing (0.01 SOL)
+- ✅ Configured for mock mode (no blockchain)
 
 **View your configuration:**
 ```bash
@@ -79,11 +79,13 @@ solana:
   network: devnet
 ```
 
+⚠️ **Note:** Even though this shows "solana" config, x402-dev does NOT actually connect to Solana. This is for future integration.
+
 ---
 
 ## Step 3: Start Mock Server (20 seconds)
 
-Launch the x402-dev mock facilitator:
+Launch the x402-dev mock server:
 
 ```bash
 x402-dev mock
@@ -96,41 +98,44 @@ x402-dev mock
 ✅ Mock payment processor ready
 🚀 Server running at http://localhost:3402
 
+⚠️  MOCK MODE: No real blockchain integration
+    Accepts any payment proof for testing purposes
+
 Press Ctrl+C to stop
 ```
 
 **What is mock mode?**
-Mock mode simulates the x402 payment protocol **without touching the blockchain**. Perfect for:
-- 🧪 Local development
-- ✅ Testing in CI/CD
+Mock mode simulates the x402 payment protocol **without any blockchain connection**. Perfect for:
+- 🧪 Local development and testing
+- ✅ CI/CD pipeline testing
 - 🎓 Learning the protocol
-- ⚡ Instant feedback (no waiting for blockchain confirmations)
+- ⚡ Instant feedback (no waiting for blockchain)
 
 **Keep this terminal open** - the server is running!
 
 ---
 
-## Step 4: Test Your API (25 seconds)
+## Step 4: Test Your Mock Endpoint (25 seconds)
 
 Open a **new terminal** and test the endpoint:
 
 ```bash
-curl http://localhost:3402/api/data
+curl -i http://localhost:3402/api/data
 ```
 
 **Expected response (HTTP 402):**
 ```http
 HTTP/1.1 402 Payment Required
-WWW-Authenticate: x402-solana recipient=7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU amount=1000 currency=USDC memo=req-1731393847123 network=devnet
+WWW-Authenticate: x402-solana recipient=Test1234567890abcdefg amount=1000 currency=USDC memo=req-1731393847123 network=devnet
 Content-Type: application/json
 
 {
   "error": "Payment required",
   "amount_lamports": 1000,
   "currency": "USDC",
-  "message": "Pay 0.000001 SOL to access this endpoint",
+  "message": "Pay 0.01 SOL to access this endpoint",
   "invoice": {
-    "recipient": "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU",
+    "recipient": "Test1234567890abcdefg",
     "amount": 1000,
     "memo": "req-1731393847123",
     "network": "devnet"
@@ -138,19 +143,50 @@ Content-Type: application/json
 }
 ```
 
-✅ **Perfect!** You just received a 402 Payment Required response with a Solana invoice.
+✅ **Perfect!** You just received a 402 Payment Required response with a mock invoice.
 
 **What just happened:**
 1. Your request hit the x402-dev mock server
-2. Server generated a payment invoice (Solana devnet)
+2. Server generated a **mock** invoice (test address, not real)
 3. Returned HTTP 402 with invoice details in `WWW-Authenticate` header
-4. Client can now pay the invoice to access the protected content
+4. In a real app, client would pay and retry with proof
 
 ---
 
-## Step 5: Verify the Workflow (Optional - 2 minutes)
+## Step 5: Test Payment Simulation (Optional - 2 minutes)
 
-Let's understand what we built:
+The mock server accepts ANY payment proof for testing.
+
+**Try sending a request with a fake payment proof:**
+
+```bash
+curl -i http://localhost:3402/api/data \
+  -H "X-Payment-Proof: any-random-string-works"
+```
+
+**Expected response (HTTP 200):**
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{
+  "message": "Payment verified successfully",
+  "data": {
+    "resource": "/api/data",
+    "access_granted": true
+  }
+}
+```
+
+✅ **Mock Verification:** The server accepted ANY proof without blockchain validation.
+
+⚠️ **Critical Understanding:** This is ONLY for testing. Real production systems must verify actual blockchain transactions.
+
+---
+
+## Step 6: Verify the Protocol (Optional - 2 minutes)
+
+Let's validate that your mock server correctly implements the 402 protocol:
 
 ### Check Server Status
 ```bash
@@ -165,54 +201,32 @@ x402-dev mock status
    Uptime: 2m 34s
 ```
 
-### View Configuration
-```bash
-x402-dev config show
-```
-
-**Output:**
-```
-x402-dev Configuration
-=====================
-
-Configuration Priority:
-  CLI flags > Environment variables > Project config > Global config > Defaults
-
-Current Configuration:
-  port: 3402 (source: project config)
-  solana_rpc: https://api.devnet.solana.com (source: project config)
-  log_level: info (source: default)
-```
-
-### Validate API Compliance
+### Validate Protocol Compliance
 ```bash
 x402-dev check http://localhost:3402/api/data
 ```
 
 **Output:**
 ```
-x402 API Compliance Check
-=========================
+x402 Protocol Compliance Check
+==============================
 
 Checking: http://localhost:3402/api/data
 
 Protocol Validation:
   ✅ HTTP 402 status code: PASS
   ✅ WWW-Authenticate header: PASS
-
-Invoice Structure:
+  ✅ Header format: x402-solana
   ✅ Field 'recipient': present
   ✅ Field 'amount': present
   ✅ Field 'currency': present
   ✅ Field 'memo': present
   ✅ Field 'network': present
-  ✅ Recipient address: 7xKXtg2C... (valid Base58)
-  ✅ Amount: 1000 USDC
-  ✅ Currency: USDC
-  ✅ Memo: req-1731393847123
-  ✅ Network: devnet
 
-Overall: ✅ ALL CHECKS PASSED (12/12)
+Overall: ✅ ALL CHECKS PASSED (8/8)
+
+⚠️  Note: This validates protocol compliance only.
+    Mock server does not verify real blockchain transactions.
 ```
 
 ---
@@ -221,9 +235,10 @@ Overall: ✅ ALL CHECKS PASSED (12/12)
 
 You successfully:
 - ✅ Installed x402-dev CLI
-- ✅ Created a new project
+- ✅ Created a test project
 - ✅ Started a mock payment server
 - ✅ Received your first 402 Payment Required response
+- ✅ Tested mock payment verification
 - ✅ Validated x402 protocol compliance
 
 **Total time:** ~90 seconds (as promised!) ⚡
@@ -232,76 +247,74 @@ You successfully:
 
 ## 🎯 What's Next?
 
-Now that you have a working x402 API, choose your next adventure:
+Now that you have a working mock server, choose your next adventure:
 
-### 🚀 Deploy to Production (20 minutes)
-Switch from mock devnet to Solana mainnet for real payments.
+### 🧪 Write Automated Tests (15 minutes)
+Create YAML test suites to test your payment-protected endpoints in CI/CD.
 
-**Quick steps:**
-1. Edit `.x402dev.yaml` → Change `network: mainnet-beta`
-2. Set your Solana wallet address
-3. Run `x402-dev mock --production`
+**Quick example:**
+```yaml
+# tests/payment-flow.yaml
+tests:
+  - name: "Returns 402 without payment"
+    request:
+      url: "http://localhost:3402/api/data"
+    assertions:
+      - type: status_code
+        expected: 402
+```
 
-👉 [Production Deployment Guide](production.md)
-
----
-
-### 🔌 Integrate into Existing App (15 minutes)
-Add x402 payment protection to your Express/Actix/FastAPI API.
-
-**Supported frameworks:**
-- Express.js (Node.js)
-- Actix-web (Rust)
-- FastAPI (Python)
-- Any HTTP server (via middleware)
-
-👉 [Integration Guide](integration-guide.md)
-
----
-
-### 🎨 Customize Pricing (10 minutes)
-Set different prices per endpoint, dynamic pricing, or subscriptions.
-
-**Example:** Charge $0.01 for `/api/basic` and $1.00 for `/api/premium`
-
-👉 [Pricing Rules Guide](pricing.md)
-
----
-
-### 🧪 Run Automated Tests (15 minutes)
-Learn how to test x402-protected endpoints in your CI/CD pipeline.
-
-**Features:**
-- YAML test suites
-- JUnit XML reports
-- GitHub Actions integration
-- Parallel test execution
+```bash
+x402-dev test tests/payment-flow.yaml
+```
 
 👉 [Testing Guide](testing.md)
 
 ---
 
-### 📚 Deep Dive into Protocol (1 hour)
-Understand how the x402 protocol works under the hood.
+### 🎨 Generate Policy Middleware (10 minutes)
+Convert YAML policies into Express/Fastify middleware code.
+
+**Example:** Rate limiting policy
+```yaml
+# policy.yaml
+policies:
+  - type: rate_limit
+    pattern: "/api/*"
+    max_requests: 100
+    window: 3600
+```
+
+```bash
+x402-dev policy generate policy.yaml --framework express
+```
+
+👉 [Policy Engine Guide](policy.md)
+
+---
+
+### 📚 Understand the Protocol (1 hour)
+Learn how the HTTP 402 protocol works and plan your real blockchain integration.
 
 **Topics:**
 - HTTP 402 standard (RFC 7231)
 - WWW-Authenticate header format
-- Solana payment verification
-- Security considerations
+- Payment flow architecture
+- Real Solana integration (what's needed)
 
-👉 [Protocol Specification](protocol.md)
+👉 [Protocol Specification](protocol.md) | [Architecture](architecture.md)
 
 ---
 
-### 🔬 Explore Examples (5 minutes)
-Browse complete working examples:
+### 🔗 Integrate Real Payments (Future)
+x402-dev provides the testing layer. For production, you'll need:
 
-- **MCP Server with Payments** - Claude Desktop integration
-- **AI Agent Policy Enforcement** - YAML policies → middleware
-- **CI/CD Testing Suite** - Automated x402 testing
+- `solana-client` crate for blockchain calls
+- Transaction verification logic
+- Payment cache (prevent replay attacks)
+- Wallet/keypair management
 
-👉 [All Examples](../examples/)
+👉 [Limitations & Future Roadmap](limitations.md)
 
 ---
 
@@ -316,32 +329,13 @@ Browse complete working examples:
 # Option 1: Use a different port
 x402-dev mock --port 8402
 
-# Option 2: Kill the existing process
+# Option 2: Find and kill the process
 lsof -i :3402  # Find process ID (PID)
 kill -9 <PID>  # Replace <PID> with actual number
 
 # Option 3: Stop x402-dev cleanly
 x402-dev mock stop
 ```
-
----
-
-### "Solana RPC connection failed"
-
-**Cause:** Solana devnet might be temporarily down or rate-limiting.
-
-**Fix:**
-```bash
-# Test RPC connection
-curl https://api.devnet.solana.com -X POST \
-  -H "Content-Type: application/json" \
-  -d '{"jsonrpc":"2.0","id":1,"method":"getHealth"}'
-
-# If down, use alternative RPC
-x402-dev mock --rpc https://devnet.helius-rpc.com
-```
-
-**Prevention:** Configure fallback RPC in `.x402dev.yaml`
 
 ---
 
@@ -363,11 +357,22 @@ source ~/.bashrc  # or ~/.zshrc
 
 ---
 
+### "Solana RPC connection failed"
+
+**Cause:** You might think this is a real error, but remember - **x402-dev does NOT connect to Solana**.
+
+**Reality:** This error should NOT appear because there are no real blockchain calls. If you see this, it's likely from a future feature not yet implemented.
+
+**What to do:** Use the mock server as-is. No RPC connection needed.
+
+---
+
 ## 📖 Learn More
 
 - [CLI Reference](cli-reference.md) - All commands with examples
-- [Architecture](architecture.md) - How x402-dev works
+- [Architecture](architecture.md) - How x402-dev works (mock mode)
 - [Troubleshooting](troubleshooting.md) - Common issues & fixes
+- [Limitations](limitations.md) - What's NOT implemented
 - [Contributing](../CONTRIBUTING.md) - Help improve x402-dev
 
 ---
@@ -384,18 +389,32 @@ source ~/.bashrc  # or ~/.zshrc
    x402-dev doctor
    ```
 
-3. **Generate custom config templates:**
+3. **Test different endpoints:**
    ```bash
-   x402-dev init --template minimal
+   # The mock server accepts any path
+   curl http://localhost:3402/api/users
+   curl http://localhost:3402/api/premium
    ```
 
-4. **Monitor server in real-time:**
-   ```bash
-   x402-dev mock --watch
-   ```
+4. **Understand what's real vs mock:**
+   - ✅ Real: 402 protocol implementation
+   - ✅ Real: HTTP server, headers, responses
+   - ❌ Mock: Invoice addresses (test addresses only)
+   - ❌ Mock: Payment verification (accepts anything)
+   - ❌ Mock: No actual blockchain transactions
 
 ---
 
-**🎓 You've completed the Quick Start!** Ready to build amazing payment-protected APIs.
+## ⚠️ Critical Reminders
 
-[← Back to README](../README.md) | [CLI Reference →](cli-reference.md) | [Examples →](../examples/)
+1. **x402-dev is a TESTING tool** - Not for production payment processing
+2. **No real blockchain** - Mock server only, no Solana SDK integration
+3. **Accepts any payment proof** - For testing convenience, not security
+4. **Test addresses only** - Invoices contain hardcoded test addresses
+5. **For production** - You must add real Solana integration separately
+
+---
+
+**🎓 You've completed the Quick Start!** Ready to test your payment-protected APIs.
+
+[← Back to README](../README.md) | [CLI Reference →](cli-reference.md) | [Limitations →](limitations.md)
