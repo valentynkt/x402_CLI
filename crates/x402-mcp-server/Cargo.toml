@@ -2,10 +2,13 @@
 name = "x402-mcp-server"
 version = "0.1.0"
 edition = "2021"
-authors = ["x402-dev Team"]
-description = "MCP server for x402-dev payment protocol testing toolkit"
+authors = ["Valentyn Kit <valentinkit14@gmail.com>"]
+description = "MCP server for x402-dev payment protocol testing toolkit - enables Claude AI integration with 402 payment testing"
 license = "MIT"
-repository = "https://github.com/x402-dev/mcp-server"
+repository = "https://github.com/valentynkt/x402_CLI"
+homepage = "https://github.com/valentynkt/x402_CLI"
+documentation = "https://docs.rs/x402-mcp-server"
+readme = "README.md"
 keywords = ["mcp", "x402", "payment", "testing", "solana"]
 categories = ["development-tools", "testing"]
 
@@ -22,9 +25,9 @@ serde_yaml = "0.9"
 schemars = { version = "1.0", features = ["derive"] }
 
 # Direct x402-dev library integration (no subprocess overhead)
-x402-core = { path = "../x402-core" }
-x402-server = { path = "../x402-server" }
-x402-domain = { path = "../x402-domain" }
+x402-core = { version = "0.1", path = "../x402-core" }
+x402-server = { version = "0.1", path = "../x402-server" }
+x402-domain = { version = "0.1", path = "../x402-domain" }
 
 # Async runtime
 tokio = { version = "1.35", features = ["full"] }
