@@ -53,6 +53,6 @@ pub mod server;
 pub use lifecycle::{restart_server, server_status, start_server, stop_server};
 pub use process::ProcessManager;
 pub use server::{
-    Config, Invoice, InvoiceGenerator, MockServer, MockServerConfig, PricingConfig,
-    PricingMatcher, SimulationMode,
+    Config, Invoice, InvoiceGenerator, MockServer, MockServerConfig, PricingConfig, PricingMatcher,
+    SimulationMode,
 };

@@ -59,7 +59,8 @@ const fp = require('fastify-plugin');
     code.push_str(&generate_plugin_function(policies));
 
     // Export with metadata
-    code.push_str(&r#"
+    code.push_str(
+        r#"
 // Export plugin with metadata
 module.exports = fp(x402PolicyPlugin, {
   fastify: '4.x',
@@ -69,7 +70,8 @@ module.exports = fp(x402PolicyPlugin, {
     reply: []
   }
 });
-"#.to_string());
+"#,
+    );
 
     code
 }
@@ -84,7 +86,9 @@ fn generate_schemas(policies: &[PolicyRule]) -> String {
             PolicyRule::Allowlist { field, .. } | PolicyRule::Denylist { field, .. } => {
                 if field == "agent_id" && !required_headers.contains(&"x-agent-id") {
                     required_headers.push("x-agent-id");
-                } else if field == "wallet_address" && !required_headers.contains(&"x-wallet-address") {
+                } else if field == "wallet_address"
+                    && !required_headers.contains(&"x-wallet-address")
+                {
                     required_headers.push("x-wallet-address");
                 }
             }
@@ -95,10 +99,7 @@ fn generate_schemas(policies: &[PolicyRule]) -> String {
     let required_array = if required_headers.is_empty() {
         "[]".to_string()
     } else {
-        format!(
-            "['{}']",
-            required_headers.join("', '")
-        )
+        format!("['{}']", required_headers.join("', '"))
     };
 
     format!(
@@ -128,7 +129,9 @@ fn generate_helpers(policies: &[PolicyRule]) -> String {
     let mut code = String::new();
 
     // Check if we need rate limiting
-    let has_rate_limit = policies.iter().any(|p| matches!(p, PolicyRule::RateLimit { .. }));
+    let has_rate_limit = policies
+        .iter()
+        .any(|p| matches!(p, PolicyRule::RateLimit { .. }));
     if has_rate_limit {
         code.push_str(
             r#"// Rate limiting state (in-memory, use Redis in production)
@@ -164,7 +167,9 @@ function checkRateLimit(agentId, maxRequests, windowSeconds) {
     }
 
     // Check if we need spending tracking
-    let has_spending_cap = policies.iter().any(|p| matches!(p, PolicyRule::SpendingCap { .. }));
+    let has_spending_cap = policies
+        .iter()
+        .any(|p| matches!(p, PolicyRule::SpendingCap { .. }));
     if has_spending_cap {
         code.push_str(
             r#"// Spending tracking state (in-memory, use database in production)
@@ -278,7 +283,11 @@ async function x402PolicyPlugin(fastify, options) {
 
 "#,
                     idx,
-                    values.iter().map(|v| format!("'{}'", v)).collect::<Vec<_>>().join(", "),
+                    values
+                        .iter()
+                        .map(|v| format!("'{}'", v))
+                        .collect::<Vec<_>>()
+                        .join(", "),
                     idx,
                     field_var,
                     field,
@@ -308,7 +317,11 @@ async function x402PolicyPlugin(fastify, options) {
 
 "#,
                     idx,
-                    values.iter().map(|v| format!("'{}'", v)).collect::<Vec<_>>().join(", "),
+                    values
+                        .iter()
+                        .map(|v| format!("'{}'", v))
+                        .collect::<Vec<_>>()
+                        .join(", "),
                     idx,
                     field_var,
                     field,
@@ -316,7 +329,10 @@ async function x402PolicyPlugin(fastify, options) {
                 ));
             }
 
-            PolicyRule::RateLimit { max_requests, window_seconds } => {
+            PolicyRule::RateLimit {
+                max_requests,
+                window_seconds,
+            } => {
                 code.push_str(&format!(
                     r#"    if (!checkRateLimit(agentId, {}, {})) {{
       logAuditEvent({{
@@ -333,7 +349,11 @@ async function x402PolicyPlugin(fastify, options) {
                 ));
             }
 
-            PolicyRule::SpendingCap { max_amount, currency, window_seconds } => {
+            PolicyRule::SpendingCap {
+                max_amount,
+                currency,
+                window_seconds,
+            } => {
                 code.push_str(&format!(
                     r#"    const paymentAmount_{} = parseFloat(request.headers['x-payment-amount'] || '0.01');
     if (!checkSpendingCap(agentId, paymentAmount_{}, {}, {})) {{
@@ -400,12 +420,10 @@ mod tests {
 
     #[test]
     fn test_generate_basic_fastify_plugin() {
-        let policies = vec![
-            PolicyRule::Allowlist {
-                field: "agent_id".to_string(),
-                values: vec!["agent-123".to_string(), "agent-456".to_string()],
-            },
-        ];
+        let policies = vec![PolicyRule::Allowlist {
+            field: "agent_id".to_string(),
+            values: vec!["agent-123".to_string(), "agent-456".to_string()],
+        }];
 
         let code = generate_fastify_plugin(&policies, Some("test.yaml"));
 
@@ -421,12 +439,10 @@ mod tests {
 
     #[test]
     fn test_generate_rate_limit_plugin() {
-        let policies = vec![
-            PolicyRule::RateLimit {
-                max_requests: 100,
-                window_seconds: 3600,
-            },
-        ];
+        let policies = vec![PolicyRule::RateLimit {
+            max_requests: 100,
+            window_seconds: 3600,
+        }];
 
         let code = generate_fastify_plugin(&policies, None);
 
@@ -439,13 +455,11 @@ mod tests {
 
     #[test]
     fn test_generate_spending_cap_plugin() {
-        let policies = vec![
-            PolicyRule::SpendingCap {
-                max_amount: 10.0,
-                currency: "USDC".to_string(),
-                window_seconds: 86400,
-            },
-        ];
+        let policies = vec![PolicyRule::SpendingCap {
+            max_amount: 10.0,
+            currency: "USDC".to_string(),
+            window_seconds: 86400,
+        }];
 
         let code = generate_fastify_plugin(&policies, None);
 

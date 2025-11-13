@@ -9,6 +9,6 @@
 //! - `check_workflow_test` - Check command workflow scenarios
 //! - `doctor_workflow_test` - Doctor command workflow scenarios
 
-mod cli_integration_test;
 mod check_workflow_test;
+mod cli_integration_test;
 mod doctor_workflow_test;

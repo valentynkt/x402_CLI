@@ -3,7 +3,7 @@
 //
 // Tests the critical 20%: Mock server is the main feature with 490 lines and 0% coverage
 
-use actix_web::{test, App, web, http::StatusCode};
+use actix_web::{http::StatusCode, test, web, App};
 use std::time::Duration;
 
 // Import from x402-server instead of x402-core
@@ -29,9 +29,7 @@ async fn test_payment_required_response() {
     ).await;
 
     // When: Making a GET request without payment proof
-    let req = test::TestRequest::get()
-        .uri("/api/test")
-        .to_request();
+    let req = test::TestRequest::get().uri("/api/test").to_request();
 
     let resp = test::call_service(&app, req).await;
 
@@ -115,13 +113,17 @@ async fn test_cors_headers() {
                     .allow_any_origin()
                     .allow_any_method()
                     .allow_any_header()
-                    .max_age(3600)
+                    .max_age(3600),
             )
-            .route("/api/test", web::get().to(|| async {
-                actix_web::HttpResponse::PaymentRequired()
-                    .json(serde_json::json!({"error": "Payment required"}))
-            }))
-    ).await;
+            .route(
+                "/api/test",
+                web::get().to(|| async {
+                    actix_web::HttpResponse::PaymentRequired()
+                        .json(serde_json::json!({"error": "Payment required"}))
+                }),
+            ),
+    )
+    .await;
 
     // When: Making a preflight OPTIONS request
     // Note: TestRequest doesn't have options(), using default() with method override
@@ -143,15 +145,16 @@ async fn test_cors_headers() {
 #[actix_web::test]
 async fn test_concurrent_requests() {
     // Given: A mock server handler
-    let app = test::init_service(
-        App::new()
-            .route("/api/test", web::get().to(|| async {
-                // Simulate some processing time
-                tokio::time::sleep(Duration::from_millis(10)).await;
-                actix_web::HttpResponse::PaymentRequired()
-                    .json(serde_json::json!({"error": "Payment required"}))
-            }))
-    ).await;
+    let app = test::init_service(App::new().route(
+        "/api/test",
+        web::get().to(|| async {
+            // Simulate some processing time
+            tokio::time::sleep(Duration::from_millis(10)).await;
+            actix_web::HttpResponse::PaymentRequired()
+                .json(serde_json::json!({"error": "Payment required"}))
+        }),
+    ))
+    .await;
 
     // When: Making 10 sequential requests (actix test utilities are not Send)
     // Testing that the service can handle multiple requests correctly
@@ -171,25 +174,23 @@ async fn test_concurrent_requests() {
 #[actix_web::test]
 async fn test_simulation_mode_success() {
     // Given: Server in success simulation mode
-    let app = test::init_service(
-        App::new()
-            .route("/api/test", web::get().to(|req: actix_web::HttpRequest| async move {
-                // Check simulation mode header
-                match req.headers().get("x-simulation-mode") {
-                    Some(mode) if mode == "success" => {
-                        actix_web::HttpResponse::Ok()
-                            .json(serde_json::json!({
-                                "status": "success",
-                                "simulation": true
-                            }))
-                    }
-                    _ => {
-                        actix_web::HttpResponse::PaymentRequired()
-                            .json(serde_json::json!({"error": "Payment required"}))
-                    }
+    let app = test::init_service(App::new().route(
+        "/api/test",
+        web::get().to(|req: actix_web::HttpRequest| async move {
+            // Check simulation mode header
+            match req.headers().get("x-simulation-mode") {
+                Some(mode) if mode == "success" => {
+                    actix_web::HttpResponse::Ok().json(serde_json::json!({
+                        "status": "success",
+                        "simulation": true
+                    }))
                 }
-            }))
-    ).await;
+                _ => actix_web::HttpResponse::PaymentRequired()
+                    .json(serde_json::json!({"error": "Payment required"})),
+            }
+        }),
+    ))
+    .await;
 
     // When: Making request with success simulation
     let req = test::TestRequest::get()
@@ -207,24 +208,22 @@ async fn test_simulation_mode_success() {
 #[actix_web::test]
 async fn test_simulation_mode_failure() {
     // Given: Server in failure simulation mode
-    let app = test::init_service(
-        App::new()
-            .route("/api/test", web::get().to(|req: actix_web::HttpRequest| async move {
-                match req.headers().get("x-simulation-mode") {
-                    Some(mode) if mode == "failure" => {
-                        actix_web::HttpResponse::BadRequest()
-                            .json(serde_json::json!({
-                                "error": "Simulated payment failure",
-                                "simulation": true
-                            }))
-                    }
-                    _ => {
-                        actix_web::HttpResponse::PaymentRequired()
-                            .json(serde_json::json!({"error": "Payment required"}))
-                    }
+    let app = test::init_service(App::new().route(
+        "/api/test",
+        web::get().to(|req: actix_web::HttpRequest| async move {
+            match req.headers().get("x-simulation-mode") {
+                Some(mode) if mode == "failure" => {
+                    actix_web::HttpResponse::BadRequest().json(serde_json::json!({
+                        "error": "Simulated payment failure",
+                        "simulation": true
+                    }))
                 }
-            }))
-    ).await;
+                _ => actix_web::HttpResponse::PaymentRequired()
+                    .json(serde_json::json!({"error": "Payment required"})),
+            }
+        }),
+    ))
+    .await;
 
     // When: Making request with failure simulation
     let req = test::TestRequest::get()
@@ -242,25 +241,23 @@ async fn test_simulation_mode_failure() {
 #[actix_web::test]
 async fn test_simulation_mode_timeout() {
     // Given: Server in timeout simulation mode
-    let app = test::init_service(
-        App::new()
-            .route("/api/test", web::get().to(|req: actix_web::HttpRequest| async move {
-                match req.headers().get("x-simulation-mode") {
-                    Some(mode) if mode == "timeout" => {
-                        // Simulate a timeout scenario
-                        actix_web::HttpResponse::RequestTimeout()
-                            .json(serde_json::json!({
-                                "error": "Simulated timeout",
-                                "simulation": true
-                            }))
-                    }
-                    _ => {
-                        actix_web::HttpResponse::PaymentRequired()
-                            .json(serde_json::json!({"error": "Payment required"}))
-                    }
+    let app = test::init_service(App::new().route(
+        "/api/test",
+        web::get().to(|req: actix_web::HttpRequest| async move {
+            match req.headers().get("x-simulation-mode") {
+                Some(mode) if mode == "timeout" => {
+                    // Simulate a timeout scenario
+                    actix_web::HttpResponse::RequestTimeout().json(serde_json::json!({
+                        "error": "Simulated timeout",
+                        "simulation": true
+                    }))
                 }
-            }))
-    ).await;
+                _ => actix_web::HttpResponse::PaymentRequired()
+                    .json(serde_json::json!({"error": "Payment required"})),
+            }
+        }),
+    ))
+    .await;
 
     // When: Making request with timeout simulation
     let req = test::TestRequest::get()
@@ -282,24 +279,22 @@ async fn test_simulation_mode_timeout() {
 #[actix_web::test]
 async fn test_error_response_format() {
     // Given: A handler that returns errors
-    let app = test::init_service(
-        App::new()
-            .route("/api/invalid", web::get().to(|| async {
-                actix_web::HttpResponse::PaymentRequired()
-                    .json(serde_json::json!({
-                        "error": "Payment required",
-                        "message": "This endpoint requires payment",
-                        "amount": 0.01,
-                        "currency": "USDC",
-                        "help": "Include x-payment-proof header with transaction ID"
-                    }))
+    let app = test::init_service(App::new().route(
+        "/api/invalid",
+        web::get().to(|| async {
+            actix_web::HttpResponse::PaymentRequired().json(serde_json::json!({
+                "error": "Payment required",
+                "message": "This endpoint requires payment",
+                "amount": 0.01,
+                "currency": "USDC",
+                "help": "Include x-payment-proof header with transaction ID"
             }))
-    ).await;
+        }),
+    ))
+    .await;
 
     // When: Making a request that triggers error
-    let req = test::TestRequest::get()
-        .uri("/api/invalid")
-        .to_request();
+    let req = test::TestRequest::get().uri("/api/invalid").to_request();
 
     let resp = test::call_service(&app, req).await;
 

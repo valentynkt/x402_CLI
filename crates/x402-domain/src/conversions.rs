@@ -6,9 +6,9 @@
 //! **Phase 1 (Wave 1)**: Only additive conversions. Old types remain intact.
 //! **Phase 2 (Wave 2)**: Remove old types after all usage sites are updated.
 
-use crate::{Amount, PricingConfig};
 #[cfg(test)]
 use crate::ResourcePath;
+use crate::{Amount, PricingConfig};
 use std::collections::HashMap;
 
 /// CLI PricingConfig conversion (from x402-cli/src/config.rs)
@@ -38,8 +38,8 @@ impl PricingConfig {
     /// ```
     pub fn from_cli(default_f64: f64, per_resource_f64: HashMap<String, f64>) -> Self {
         // Convert default amount from f64 to Amount
-        let default = Amount::from_decimal_str(&default_f64.to_string())
-            .unwrap_or_else(|_| Amount::zero());
+        let default =
+            Amount::from_decimal_str(&default_f64.to_string()).unwrap_or_else(|_| Amount::zero());
 
         // Convert per-resource pricing
         let mut per_resource = HashMap::new();
@@ -53,7 +53,7 @@ impl PricingConfig {
             default,
             per_resource,
             currency: "USDC".to_string(), // CLI doesn't have currency field, default to USDC
-            memo_prefix: None,              // CLI doesn't have memo_prefix
+            memo_prefix: None,            // CLI doesn't have memo_prefix
         }
     }
 
@@ -61,7 +61,12 @@ impl PricingConfig {
     ///
     /// Returns (default: f64, per_resource: HashMap<String, f64>)
     pub fn to_cli(&self) -> (f64, HashMap<String, f64>) {
-        let default_f64 = self.default.as_decimal().to_string().parse::<f64>().unwrap_or(0.01);
+        let default_f64 = self
+            .default
+            .as_decimal()
+            .to_string()
+            .parse::<f64>()
+            .unwrap_or(0.01);
 
         let per_resource_f64: HashMap<String, f64> = self
             .per_resource
@@ -101,8 +106,8 @@ impl PricingConfig {
         currency: String,
         memo_prefix: Option<String>,
     ) -> Self {
-        let default = Amount::from_decimal_str(&amount_f64.to_string())
-            .unwrap_or_else(|_| Amount::zero());
+        let default =
+            Amount::from_decimal_str(&amount_f64.to_string()).unwrap_or_else(|_| Amount::zero());
 
         Self {
             default,
@@ -116,7 +121,12 @@ impl PricingConfig {
     ///
     /// Returns (amount: f64, currency: String, memo_prefix: Option<String>)
     pub fn to_policy_rules(&self) -> (f64, String, Option<String>) {
-        let amount_f64 = self.default.as_decimal().to_string().parse::<f64>().unwrap_or(0.01);
+        let amount_f64 = self
+            .default
+            .as_decimal()
+            .to_string()
+            .parse::<f64>()
+            .unwrap_or(0.01);
 
         (amount_f64, self.currency.clone(), self.memo_prefix.clone())
     }
@@ -160,10 +170,7 @@ mod tests {
 
         let canonical = PricingConfig::from_cli(0.01, per_resource);
 
-        assert_eq!(
-            canonical.default,
-            Amount::from_decimal_str("0.01").unwrap()
-        );
+        assert_eq!(canonical.default, Amount::from_decimal_str("0.01").unwrap());
         assert_eq!(canonical.per_resource.len(), 2);
         assert_eq!(canonical.currency, "USDC");
         assert_eq!(canonical.memo_prefix, None);
@@ -186,16 +193,10 @@ mod tests {
 
     #[test]
     fn test_from_policy_rules_conversion() {
-        let canonical = PricingConfig::from_policy_rules(
-            0.02,
-            "SOL".to_string(),
-            Some("x402:".to_string()),
-        );
+        let canonical =
+            PricingConfig::from_policy_rules(0.02, "SOL".to_string(), Some("x402:".to_string()));
 
-        assert_eq!(
-            canonical.default,
-            Amount::from_decimal_str("0.02").unwrap()
-        );
+        assert_eq!(canonical.default, Amount::from_decimal_str("0.02").unwrap());
         assert_eq!(canonical.currency, "SOL");
         assert_eq!(canonical.memo_prefix, Some("x402:".to_string()));
         assert_eq!(canonical.per_resource.len(), 0); // Policy rules doesn't have per-resource
@@ -216,16 +217,9 @@ mod tests {
 
     #[test]
     fn test_from_codegen_conversion() {
-        let canonical = PricingConfig::from_codegen(
-            0.01,
-            "USDC".to_string(),
-            None,
-        );
+        let canonical = PricingConfig::from_codegen(0.01, "USDC".to_string(), None);
 
-        assert_eq!(
-            canonical.default,
-            Amount::from_decimal_str("0.01").unwrap()
-        );
+        assert_eq!(canonical.default, Amount::from_decimal_str("0.01").unwrap());
         assert_eq!(canonical.currency, "USDC");
     }
 
@@ -253,11 +247,8 @@ mod tests {
 
     #[test]
     fn test_roundtrip_policy_rules() {
-        let canonical = PricingConfig::from_policy_rules(
-            0.05,
-            "SOL".to_string(),
-            Some("prefix:".to_string()),
-        );
+        let canonical =
+            PricingConfig::from_policy_rules(0.05, "SOL".to_string(), Some("prefix:".to_string()));
 
         let (amount, currency, memo_prefix) = canonical.to_policy_rules();
 

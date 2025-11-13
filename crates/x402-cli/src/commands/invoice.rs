@@ -25,16 +25,16 @@ pub const TEST_ADDRESSES: &[&str] = &[
     "QEu9DTest8888888888888888888888888888xHi3", // TEST ADDRESS 8
     "RFv1ETest9999999999999999999999999999yJk4", // TEST ADDRESS 9
     "SGw2FTestAAAAAAAAAAAAAAAAAAAAAAAAAAAAzKm5", // TEST ADDRESS 10
-    "THx3GTestBBBBBBBBBBBBBBBBBBBBBBBBBBB1Mn6", // TEST ADDRESS 11
-    "UJy4HTestCCCCCCCCCCCCCCCCCCCCCCCCCCC2Np7", // TEST ADDRESS 12
-    "VKz5JTestDDDDDDDDDDDDDDDDDDDDDDDDDDD3Pq8", // TEST ADDRESS 13
-    "WMa6KTestEEEEEEEEEEEEEEEEEEEEEEEEEEE4Qr9", // TEST ADDRESS 14
+    "THx3GTestBBBBBBBBBBBBBBBBBBBBBBBBBBB1Mn6",  // TEST ADDRESS 11
+    "UJy4HTestCCCCCCCCCCCCCCCCCCCCCCCCCCC2Np7",  // TEST ADDRESS 12
+    "VKz5JTestDDDDDDDDDDDDDDDDDDDDDDDDDDD3Pq8",  // TEST ADDRESS 13
+    "WMa6KTestEEEEEEEEEEEEEEEEEEEEEEEEEEE4Qr9",  // TEST ADDRESS 14
     "XNb7MTestFFFFFFFFFFFFFFFFFFFFFFFFFFFF5Rs1", // TEST ADDRESS 15
-    "YPc8NTestGGGGGGGGGGGGGGGGGGGGGGGGGGG6St2", // TEST ADDRESS 16
-    "ZQd9PTestHHHHHHHHHHHHHHHHHHHHHHHHHHH7Tu3", // TEST ADDRESS 17
-    "ARe1QTestJJJJJJJJJJJJJJJJJJJJJJJJJJJ8Uv4", // TEST ADDRESS 18
-    "BSf2RTestKKKKKKKKKKKKKKKKKKKKKKKKKKK9Vw5", // TEST ADDRESS 19
-    "CTg3STestMMMMMMMMMMMMMMMMMMMMMMMMMMM1Wx6", // TEST ADDRESS 20
+    "YPc8NTestGGGGGGGGGGGGGGGGGGGGGGGGGGG6St2",  // TEST ADDRESS 16
+    "ZQd9PTestHHHHHHHHHHHHHHHHHHHHHHHHHHH7Tu3",  // TEST ADDRESS 17
+    "ARe1QTestJJJJJJJJJJJJJJJJJJJJJJJJJJJ8Uv4",  // TEST ADDRESS 18
+    "BSf2RTestKKKKKKKKKKKKKKKKKKKKKKKKKKK9Vw5",  // TEST ADDRESS 19
+    "CTg3STestMMMMMMMMMMMMMMMMMMMMMMMMMMM1Wx6",  // TEST ADDRESS 20
 ];
 
 // ============================================================================
@@ -89,6 +89,9 @@ impl Invoice {
     /// - 5-minute expiration
     /// - USDC currency
     /// - devnet network
+    ///
+    /// Library API for programmatic invoice creation
+    #[allow(dead_code)]
     pub fn new(amount: f64, resource_path: &str, recipient: String) -> Self {
         let now = Utc::now();
         let expires_at = now + Duration::minutes(5);
@@ -112,14 +115,13 @@ impl Invoice {
     ///
     /// CRITICAL: This is space-separated format (NOT base64-encoded JSON)
     /// Reference: PRD lines 83-86, x402 protocol specification
+    ///
+    /// Library API for programmatic invoice formatting
+    #[allow(dead_code)]
     pub fn format_www_authenticate(&self) -> String {
         format!(
             "x402-solana recipient={} amount={} currency={} memo={} network={}",
-            self.recipient,
-            self.amount,
-            self.currency,
-            self.memo,
-            self.network
+            self.recipient, self.amount, self.currency, self.memo, self.network
         )
     }
 
@@ -151,13 +153,20 @@ impl Invoice {
 /// This generator creates x402-compliant invoices with rotating test addresses
 /// from the TEST_ADDRESSES pool. Each invoice gets a unique memo and rotates
 /// through available test addresses.
+///
+/// Library API for programmatic invoice generation
+#[allow(dead_code)]
 pub struct InvoiceGenerator {
     /// Current index in test address pool (atomic for thread-safety)
+    #[allow(dead_code)]
     address_index: AtomicUsize,
 }
 
 impl InvoiceGenerator {
     /// Create a new invoice generator
+    ///
+    /// Library API for programmatic invoice generation
+    #[allow(dead_code)]
     pub fn new() -> Self {
         Self {
             address_index: AtomicUsize::new(0),
@@ -178,6 +187,9 @@ impl InvoiceGenerator {
     /// - Unique UUID-based memo
     /// - Current timestamp
     /// - 5-minute expiration
+    ///
+    /// Library API for programmatic invoice generation
+    #[allow(dead_code)]
     pub fn generate(&self, amount: f64, resource_path: &str) -> Invoice {
         // Get next address from pool (round-robin)
         let idx = self.address_index.fetch_add(1, Ordering::SeqCst);
@@ -326,7 +338,11 @@ mod tests {
 
         // Verify all addresses contain "Test" marker
         for addr in TEST_ADDRESSES {
-            assert!(addr.contains("Test"), "Test address missing 'Test' marker: {}", addr);
+            assert!(
+                addr.contains("Test"),
+                "Test address missing 'Test' marker: {}",
+                addr
+            );
         }
     }
 

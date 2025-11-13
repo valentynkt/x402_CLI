@@ -79,11 +79,13 @@ async fn test_rejects_non_402_responses() {
         // Then: Should fail validation
         let result = run_check_command(&args).await;
         match result {
-            Err(_) => (),  // Error is expected
+            Err(_) => (), // Error is expected
             Ok(check_result) => {
                 assert!(
                     check_result.checks_passed < check_result.checks_total,
-                    "Expected failure for status code {} ({})", status_code, description
+                    "Expected failure for status code {} ({})",
+                    status_code,
+                    description
                 );
             }
         }
@@ -99,7 +101,7 @@ async fn test_rejects_non_402_responses() {
 #[tokio::test]
 async fn test_handles_network_errors() {
     let error_urls = vec![
-        "http://localhost:1", // Connection refused
+        "http://localhost:1",                                 // Connection refused
         "http://invalid-domain-that-does-not-exist-x402.com", // DNS failure
         "http://192.0.2.1:8080", // Timeout (TEST-NET-1, should not route)
     ];
@@ -144,11 +146,20 @@ async fn test_parses_valid_www_authenticate_header() {
     assert!(result.is_ok(), "Expected successful parsing");
 
     let check_result = result.unwrap();
-    assert_eq!(check_result.parsed_fields.get("recipient").unwrap(), "9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin");
+    assert_eq!(
+        check_result.parsed_fields.get("recipient").unwrap(),
+        "9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin"
+    );
     assert_eq!(check_result.parsed_fields.get("amount").unwrap(), "1.50");
     assert_eq!(check_result.parsed_fields.get("currency").unwrap(), "USDC");
-    assert_eq!(check_result.parsed_fields.get("memo").unwrap(), "req-payment-12345");
-    assert_eq!(check_result.parsed_fields.get("network").unwrap(), "mainnet-beta");
+    assert_eq!(
+        check_result.parsed_fields.get("memo").unwrap(),
+        "req-payment-12345"
+    );
+    assert_eq!(
+        check_result.parsed_fields.get("network").unwrap(),
+        "mainnet-beta"
+    );
 }
 
 /// Test: Handles missing WWW-Authenticate header
@@ -173,9 +184,12 @@ async fn test_handles_missing_www_authenticate() {
     // Then: Should fail with missing header error
     let result = run_check_command(&args).await;
     match result {
-        Err(_) => (),  // Error is expected
+        Err(_) => (), // Error is expected
         Ok(check_result) => {
-            assert_eq!(check_result.checks_passed, 1, "Only status code check should pass");
+            assert_eq!(
+                check_result.checks_passed, 1,
+                "Only status code check should pass"
+            );
         }
     }
 }
@@ -187,9 +201,9 @@ async fn test_handles_missing_www_authenticate() {
 async fn test_handles_malformed_www_authenticate() {
     let malformed_headers = vec![
         "invalid-protocol recipient=7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU amount=0.01",
-        "x402-solana", // Protocol only, no fields
-        "x402-solana recipient", // Missing value
-        "", // Empty header
+        "x402-solana",                // Protocol only, no fields
+        "x402-solana recipient",      // Missing value
+        "",                           // Empty header
         "recipient=test amount=0.01", // Missing protocol identifier
     ];
 
@@ -199,10 +213,7 @@ async fn test_handles_malformed_www_authenticate() {
 
         Mock::given(method("GET"))
             .and(path("/api/data"))
-            .respond_with(
-                ResponseTemplate::new(402)
-                    .insert_header("WWW-Authenticate", *header)
-            )
+            .respond_with(ResponseTemplate::new(402).insert_header("WWW-Authenticate", *header))
             .mount(&mock_server)
             .await;
 
@@ -213,11 +224,13 @@ async fn test_handles_malformed_www_authenticate() {
         // Then: Should fail validation
         let result = run_check_command(&args).await;
         match result {
-            Err(_) => (),  // Error is expected
+            Err(_) => (), // Error is expected
             Ok(check_result) => {
                 assert!(
                     check_result.checks_passed < check_result.checks_total,
-                    "Expected failure for malformed header #{}: {}", idx, header
+                    "Expected failure for malformed header #{}: {}",
+                    idx,
+                    header
                 );
             }
         }
@@ -275,7 +288,7 @@ async fn test_rejects_invalid_base58_recipient() {
         "OxKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU", // Contains 'O'
         "IxKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU", // Contains 'I'
         "lxKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU", // Contains 'l'
-        "short", // Too short
+        "short",                                        // Too short
         "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU123456789012345678901234567890", // Too long
         "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJo@gAsU", // Invalid character '@'
     ];
@@ -303,11 +316,12 @@ async fn test_rejects_invalid_base58_recipient() {
         // Then: Recipient validation should fail
         let result = run_check_command(&args).await;
         match result {
-            Err(_) => (),  // Error is expected
+            Err(_) => (), // Error is expected
             Ok(check_result) => {
                 assert!(
                     check_result.checks_passed < check_result.checks_total,
-                    "Expected invalid recipient to fail: {}", recipient
+                    "Expected invalid recipient to fail: {}",
+                    recipient
                 );
             }
         }
@@ -377,11 +391,12 @@ async fn test_rejects_negative_amounts() {
         // Then: Amount validation should fail
         let result = run_check_command(&args).await;
         match result {
-            Err(_) => (),  // Error is expected
+            Err(_) => (), // Error is expected
             Ok(check_result) => {
                 assert!(
                     check_result.checks_passed < check_result.checks_total,
-                    "Expected invalid amount to fail: {}", amount
+                    "Expected invalid amount to fail: {}",
+                    amount
                 );
             }
         }
@@ -447,11 +462,12 @@ async fn test_rejects_invalid_currency() {
         // Then: Currency validation should fail
         let result = run_check_command(&args).await;
         match result {
-            Err(_) => (),  // Error is expected
+            Err(_) => (), // Error is expected
             Ok(check_result) => {
                 assert!(
                     check_result.checks_passed < check_result.checks_total,
-                    "Expected invalid currency to fail: {}", currency
+                    "Expected invalid currency to fail: {}",
+                    currency
                 );
             }
         }
@@ -463,12 +479,7 @@ async fn test_rejects_invalid_currency() {
 /// Ensures that memo fields starting with "req-" are accepted.
 #[tokio::test]
 async fn test_validates_memo_format() {
-    let valid_memos = vec![
-        "req-test-001",
-        "req-payment-12345",
-        "req-abc123",
-        "req-x",
-    ];
+    let valid_memos = vec!["req-test-001", "req-payment-12345", "req-abc123", "req-x"];
 
     for memo in valid_memos {
         // Given: Mock server with valid memo
@@ -502,11 +513,11 @@ async fn test_validates_memo_format() {
 #[tokio::test]
 async fn test_rejects_invalid_memo_format() {
     let invalid_memos = vec![
-        "test-001", // Doesn't start with "req-"
-        "req", // Too short
-        "req-", // No content after prefix
+        "test-001",      // Doesn't start with "req-"
+        "req",           // Too short
+        "req-",          // No content after prefix
         "payment-12345", // Wrong prefix
-        "", // Empty
+        "",              // Empty
     ];
 
     for memo in invalid_memos {
@@ -532,11 +543,12 @@ async fn test_rejects_invalid_memo_format() {
         // Then: Memo validation should fail
         let result = run_check_command(&args).await;
         match result {
-            Err(_) => (),  // Error is expected
+            Err(_) => (), // Error is expected
             Ok(check_result) => {
                 assert!(
                     check_result.checks_passed < check_result.checks_total,
-                    "Expected invalid memo to fail: {}", memo
+                    "Expected invalid memo to fail: {}",
+                    memo
                 );
             }
         }
@@ -607,11 +619,12 @@ async fn test_rejects_invalid_networks() {
         // Then: Network validation should fail
         let result = run_check_command(&args).await;
         match result {
-            Err(_) => (),  // Error is expected
+            Err(_) => (), // Error is expected
             Ok(check_result) => {
                 assert!(
                     check_result.checks_passed < check_result.checks_total,
-                    "Expected invalid network to fail: {}", network
+                    "Expected invalid network to fail: {}",
+                    network
                 );
             }
         }
@@ -845,7 +858,10 @@ async fn run_check_command(args: &CheckArgs) -> Result<CheckResult, String> {
         checks_passed += 1;
         output.push_str("✅ HTTP 402 status code: PASS\n");
     } else {
-        output.push_str(&format!("❌ HTTP 402 status code: FAIL (got {})\n", status.as_u16()));
+        output.push_str(&format!(
+            "❌ HTTP 402 status code: FAIL (got {})\n",
+            status.as_u16()
+        ));
     }
 
     // Check WWW-Authenticate header
@@ -866,7 +882,10 @@ async fn run_check_command(args: &CheckArgs) -> Result<CheckResult, String> {
     output.push_str("✅ WWW-Authenticate header: PASS\n");
 
     // Parse header
-    let header_value = www_auth.unwrap().to_str().map_err(|e| format!("Invalid header: {}", e))?;
+    let header_value = www_auth
+        .unwrap()
+        .to_str()
+        .map_err(|e| format!("Invalid header: {}", e))?;
     let fields = parse_www_authenticate_header(header_value)?;
 
     // Validate fields
@@ -884,12 +903,15 @@ async fn run_check_command(args: &CheckArgs) -> Result<CheckResult, String> {
     let exit_code = if checks_passed == checks_total { 0 } else { 1 };
 
     let json_output = if args.format == "json" {
-        Some(serde_json::json!({
-            "status": if exit_code == 0 { "pass" } else { "fail" },
-            "checks_passed": checks_passed,
-            "checks_total": checks_total,
-            "url": args.url,
-        }).to_string())
+        Some(
+            serde_json::json!({
+                "status": if exit_code == 0 { "pass" } else { "fail" },
+                "checks_passed": checks_passed,
+                "checks_total": checks_total,
+                "url": args.url,
+            })
+            .to_string(),
+        )
     } else {
         None
     };
@@ -939,14 +961,18 @@ fn validate_invoice_fields(fields: &HashMap<String, String>) -> Vec<(String, boo
     // Validate recipient
     if let Some(recipient) = fields.get("recipient") {
         let valid_length = recipient.len() >= 32 && recipient.len() <= 44;
-        let valid_base58 = recipient.chars().all(|c| {
-            c.is_ascii_alphanumeric() && c != '0' && c != 'O' && c != 'I' && c != 'l'
-        });
+        let valid_base58 = recipient
+            .chars()
+            .all(|c| c.is_ascii_alphanumeric() && c != '0' && c != 'O' && c != 'I' && c != 'l');
         let valid = valid_length && valid_base58;
         results.push((
             "Recipient address".to_string(),
             valid,
-            if valid { recipient[..8].to_string() } else { "invalid format".to_string() },
+            if valid {
+                recipient[..8].to_string()
+            } else {
+                "invalid format".to_string()
+            },
         ));
     }
 
@@ -956,7 +982,11 @@ fn validate_invoice_fields(fields: &HashMap<String, String>) -> Vec<(String, boo
         results.push((
             "Amount".to_string(),
             valid,
-            if valid { format!("{} USDC", amount_str) } else { "invalid amount".to_string() },
+            if valid {
+                format!("{} USDC", amount_str)
+            } else {
+                "invalid amount".to_string()
+            },
         ));
     }
 
@@ -966,7 +996,11 @@ fn validate_invoice_fields(fields: &HashMap<String, String>) -> Vec<(String, boo
         results.push((
             "Currency".to_string(),
             valid,
-            if valid { "USDC".to_string() } else { "not USDC".to_string() },
+            if valid {
+                "USDC".to_string()
+            } else {
+                "not USDC".to_string()
+            },
         ));
     }
 
@@ -976,7 +1010,11 @@ fn validate_invoice_fields(fields: &HashMap<String, String>) -> Vec<(String, boo
         results.push((
             "Memo".to_string(),
             valid,
-            if valid { memo.clone() } else { "invalid format".to_string() },
+            if valid {
+                memo.clone()
+            } else {
+                "invalid format".to_string()
+            },
         ));
     }
 
@@ -987,7 +1025,11 @@ fn validate_invoice_fields(fields: &HashMap<String, String>) -> Vec<(String, boo
         results.push((
             "Network".to_string(),
             valid,
-            if valid { network.clone() } else { format!("invalid (got {})", network) },
+            if valid {
+                network.clone()
+            } else {
+                format!("invalid (got {})", network)
+            },
         ));
     }
 

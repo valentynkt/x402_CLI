@@ -5,10 +5,15 @@
 use crate::cli::TestArgs;
 use anyhow::Result;
 use colored::Colorize;
-use x402_core::testing::{format_json, format_summary, generate_junit_xml, TestSuite};
+use x402_core::testing::{format_json, format_summary, generate_junit_xml, SuiteResult, TestSuite};
 
-/// Execute test command
-pub async fn execute(args: &TestArgs) -> Result<()> {
+/// Execute test command and return result (library-friendly, no process::exit)
+///
+/// This function is designed for library integration (e.g., MCP server).
+/// It executes the test suite and returns the SuiteResult without exiting the process.
+///
+/// For CLI usage, see `execute()` which wraps this and handles process exit.
+pub async fn execute_with_result(args: &TestArgs) -> Result<SuiteResult> {
     // Load test suite from YAML file
     let suite_path = &args.suite;
 
@@ -55,6 +60,21 @@ pub async fn execute(args: &TestArgs) -> Result<()> {
             );
         }
     }
+
+    // Return result for library integration
+    Ok(result)
+}
+
+/// Execute test command (CLI entry point)
+///
+/// This function is the CLI entry point. It calls `execute_with_result()`
+/// and exits the process with the appropriate exit code.
+///
+/// Exit codes (FR-2.4):
+/// - 0: All tests passed
+/// - 1: One or more tests failed
+pub async fn execute(args: &TestArgs) -> Result<()> {
+    let result = execute_with_result(args).await?;
 
     // FR-2.4: Exit with appropriate code
     std::process::exit(result.exit_code());

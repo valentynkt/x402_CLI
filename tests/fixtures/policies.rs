@@ -157,39 +157,45 @@ policies:
   - type: allowlist
     values:
       - agent-123
-"#.to_string(),
+"#
+        .to_string(),
 
         "allowlist_no_values" => r#"
 policies:
   - type: allowlist
     field: agent_id
-"#.to_string(),
+"#
+        .to_string(),
 
         "rate_limit_no_max_requests" => r#"
 policies:
   - type: rate_limit
     window_seconds: 3600
-"#.to_string(),
+"#
+        .to_string(),
 
         "rate_limit_no_window" => r#"
 policies:
   - type: rate_limit
     max_requests: 100
-"#.to_string(),
+"#
+        .to_string(),
 
         "spending_cap_no_amount" => r#"
 policies:
   - type: spending_cap
     currency: USDC
     window_seconds: 86400
-"#.to_string(),
+"#
+        .to_string(),
 
         "spending_cap_no_currency" => r#"
 policies:
   - type: spending_cap
     max_amount: 10.0
     window_seconds: 86400
-"#.to_string(),
+"#
+        .to_string(),
 
         _ => panic!("Unknown variant: {}", variant),
     }
@@ -206,35 +212,40 @@ policies:
     field: ""
     values:
       - agent-123
-"#.to_string(),
+"#
+        .to_string(),
 
         "empty_values_list" => r#"
 policies:
   - type: allowlist
     field: agent_id
     values: []
-"#.to_string(),
+"#
+        .to_string(),
 
         "zero_max_requests" => r#"
 policies:
   - type: rate_limit
     max_requests: 0
     window_seconds: 3600
-"#.to_string(),
+"#
+        .to_string(),
 
         "negative_max_requests" => r#"
 policies:
   - type: rate_limit
     max_requests: -100
     window_seconds: 3600
-"#.to_string(),
+"#
+        .to_string(),
 
         "zero_window_seconds" => r#"
 policies:
   - type: rate_limit
     max_requests: 100
     window_seconds: 0
-"#.to_string(),
+"#
+        .to_string(),
 
         "negative_amount" => r#"
 policies:
@@ -242,7 +253,8 @@ policies:
     max_amount: -10.0
     currency: USDC
     window_seconds: 86400
-"#.to_string(),
+"#
+        .to_string(),
 
         "zero_amount" => r#"
 policies:
@@ -250,7 +262,8 @@ policies:
     max_amount: 0.0
     currency: USDC
     window_seconds: 86400
-"#.to_string(),
+"#
+        .to_string(),
 
         "empty_currency" => r#"
 policies:
@@ -258,7 +271,8 @@ policies:
     max_amount: 10.0
     currency: ""
     window_seconds: 86400
-"#.to_string(),
+"#
+        .to_string(),
 
         _ => panic!("Unknown variant: {}", variant),
     }

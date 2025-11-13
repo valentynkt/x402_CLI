@@ -127,11 +127,7 @@ async fn check_environment(results: &mut DiagnosticResults) -> Result<()> {
     // Check npm availability
     match check_npm_version() {
         Some(version) => {
-            println!(
-                "  {} npm: {}",
-                CheckStatus::Pass.symbol(),
-                version.cyan()
-            );
+            println!("  {} npm: {}", CheckStatus::Pass.symbol(), version.cyan());
         }
         None => {
             println!(
@@ -140,7 +136,9 @@ async fn check_environment(results: &mut DiagnosticResults) -> Result<()> {
                 CheckStatus::Warning.color_text("Not detected (optional)")
             );
             results.add_warning("npm not detected".to_string());
-            results.add_suggestion("Install Node.js/npm for x402 ecosystem packages: https://nodejs.org/".to_string());
+            results.add_suggestion(
+                "Install Node.js/npm for x402 ecosystem packages: https://nodejs.org/".to_string(),
+            );
         }
     }
 
@@ -253,12 +251,8 @@ async fn check_ecosystem(results: &mut DiagnosticResults) -> Result<()> {
         );
 
         results.add_failure("No package.json found".to_string());
-        results.add_suggestion(
-            "Initialize Node.js project: npm init -y (if needed)".to_string(),
-        );
-        results.add_suggestion(
-            "Install Corbits SDK: npm install @corbits/sdk".to_string(),
-        );
+        results.add_suggestion("Initialize Node.js project: npm init -y (if needed)".to_string());
+        results.add_suggestion("Install Corbits SDK: npm install @corbits/sdk".to_string());
         results.add_suggestion(
             "Install PayAI packages: npm install @payai/core @payai/solana".to_string(),
         );
@@ -315,8 +309,8 @@ fn check_package(
     results: &mut DiagnosticResults,
 ) {
     let found = package_names.iter().any(|pkg| {
-        dependencies.map_or(false, |deps| deps.contains_key(*pkg))
-            || dev_dependencies.map_or(false, |deps| deps.contains_key(*pkg))
+        dependencies.is_some_and(|deps| deps.contains_key(*pkg))
+            || dev_dependencies.is_some_and(|deps| deps.contains_key(*pkg))
     });
 
     if found {
@@ -389,15 +383,10 @@ fn print_summary(results: &DiagnosticResults) {
 
 /// Check Rust version (optional)
 fn check_rust_version() -> Option<String> {
-    let output = Command::new("rustc")
-        .arg("--version")
-        .output()
-        .ok()?;
+    let output = Command::new("rustc").arg("--version").output().ok()?;
 
     if output.status.success() {
-        let version = String::from_utf8_lossy(&output.stdout)
-            .trim()
-            .to_string();
+        let version = String::from_utf8_lossy(&output.stdout).trim().to_string();
         Some(version)
     } else {
         None
@@ -406,15 +395,10 @@ fn check_rust_version() -> Option<String> {
 
 /// Check npm version
 fn check_npm_version() -> Option<String> {
-    let output = Command::new("npm")
-        .arg("--version")
-        .output()
-        .ok()?;
+    let output = Command::new("npm").arg("--version").output().ok()?;
 
     if output.status.success() {
-        let version = String::from_utf8_lossy(&output.stdout)
-            .trim()
-            .to_string();
+        let version = String::from_utf8_lossy(&output.stdout).trim().to_string();
         Some(format!("v{}", version))
     } else {
         None

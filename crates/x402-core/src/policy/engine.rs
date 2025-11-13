@@ -1,7 +1,7 @@
 // Policy evaluation engine
 
+use super::runtime_types::{Policy, PolicyDecision, RateLimitConfig, Request, SpendingCapConfig};
 use super::state::PolicyState as RuntimePolicyState;
-use super::runtime_types::{Policy, PolicyDecision, Request, RateLimitConfig, SpendingCapConfig};
 use super::types::PolicyAction;
 use anyhow::Result;
 use std::time::SystemTime;
@@ -119,7 +119,9 @@ impl PolicyEngine {
             return true; // Empty patterns match everything
         }
 
-        patterns.iter().any(|pattern| self.matches_pattern(pattern, value))
+        patterns
+            .iter()
+            .any(|pattern| self.matches_pattern(pattern, value))
     }
 
     /// Check if a value matches a single pattern with wildcard support
@@ -153,7 +155,9 @@ impl PolicyEngine {
                 return value.starts_with(prefix);
             } else {
                 // Contains match: "prefix*suffix"
-                return value.starts_with(prefix) && value.ends_with(suffix) && value.len() >= prefix.len() + suffix.len();
+                return value.starts_with(prefix)
+                    && value.ends_with(suffix)
+                    && value.len() >= prefix.len() + suffix.len();
             }
         }
 
@@ -528,7 +532,10 @@ mod tests {
 
     #[test]
     fn test_no_matching_policy_default_deny() {
-        let policies = vec![create_allow_policy("specific", vec!["agent-allowed".to_string()])];
+        let policies = vec![create_allow_policy(
+            "specific",
+            vec!["agent-allowed".to_string()],
+        )];
         let engine = PolicyEngine::new(policies);
 
         // Non-matching agent should be denied

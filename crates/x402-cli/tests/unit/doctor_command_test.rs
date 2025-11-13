@@ -76,7 +76,10 @@ fn test_detects_rust_toolchain() {
     match output {
         Ok(output) if output.status.success() => {
             let version = String::from_utf8_lossy(&output.stdout);
-            assert!(version.contains("rustc"), "Should contain 'rustc' in output");
+            assert!(
+                version.contains("rustc"),
+                "Should contain 'rustc' in output"
+            );
         }
         _ => {
             // Rust not installed - this is OK, it's optional
@@ -88,18 +91,13 @@ fn test_detects_rust_toolchain() {
 #[test]
 fn test_detects_npm_availability() {
     // Test npm detection logic
-    let output = std::process::Command::new("npm")
-        .arg("--version")
-        .output();
+    let output = std::process::Command::new("npm").arg("--version").output();
 
     match output {
         Ok(output) if output.status.success() => {
             let version = String::from_utf8_lossy(&output.stdout);
             let version_str = version.trim();
-            assert!(
-                !version_str.is_empty(),
-                "npm version should not be empty"
-            );
+            assert!(!version_str.is_empty(), "npm version should not be empty");
             // npm versions are typically in format like "10.2.3"
             assert!(
                 version_str.chars().next().unwrap().is_ascii_digit(),
@@ -121,8 +119,10 @@ fn test_handles_missing_dependencies() {
         .arg("--version")
         .output();
 
-    assert!(output.is_err() || !output.unwrap().status.success(),
-        "Non-existent tool should not be detected");
+    assert!(
+        output.is_err() || !output.unwrap().status.success(),
+        "Non-existent tool should not be detected"
+    );
 }
 
 // ============================================================================
@@ -174,17 +174,20 @@ enable_cors: true
     let content = fs::read_to_string(&config_path).expect("Should read file");
 
     // Verify the malformed content is present
-    assert!(content.contains("[unclosed bracket"), "Malformed YAML should be present");
+    assert!(
+        content.contains("[unclosed bracket"),
+        "Malformed YAML should be present"
+    );
 }
 
 #[test]
 fn test_validates_port_numbers() {
     let test_cases = vec![
-        (1, true),      // Minimum valid port
-        (80, true),     // Common HTTP port
-        (3402, true),   // Default x402-dev port
-        (8080, true),   // Common development port
-        (65535, true),  // Maximum valid port
+        (1, true),     // Minimum valid port
+        (80, true),    // Common HTTP port
+        (3402, true),  // Default x402-dev port
+        (8080, true),  // Common development port
+        (65535, true), // Maximum valid port
     ];
 
     for (port, should_be_valid) in test_cases {
@@ -200,10 +203,10 @@ fn test_validates_port_numbers() {
 #[test]
 fn test_rejects_invalid_ports() {
     let invalid_ports = vec![
-        0,      // Port 0 is invalid
-        -1,     // Negative port (would be caught by u16 type)
-        65536,  // Port > 65535 (would be caught by u16 type)
-        70000,  // Way out of range
+        0,     // Port 0 is invalid
+        -1,    // Negative port (would be caught by u16 type)
+        65536, // Port > 65535 (would be caught by u16 type)
+        70000, // Way out of range
     ];
 
     for port in invalid_ports {
@@ -236,8 +239,14 @@ mock_delay_ms: 0
 
     // Verify all required fields are present
     assert!(content.contains("port:"), "Config should have port field");
-    assert!(content.contains("log_level:"), "Config should have log_level field");
-    assert!(content.contains("enable_cors:"), "Config should have enable_cors field");
+    assert!(
+        content.contains("log_level:"),
+        "Config should have log_level field"
+    );
+    assert!(
+        content.contains("enable_cors:"),
+        "Config should have enable_cors field"
+    );
 }
 
 // ============================================================================
@@ -258,7 +267,10 @@ fn test_detects_available_port() {
 
     // Now the port should be available again
     let listener2 = TcpListener::bind(("127.0.0.1", port));
-    assert!(listener2.is_ok(), "Port should be available after listener is dropped");
+    assert!(
+        listener2.is_ok(),
+        "Port should be available after listener is dropped"
+    );
 }
 
 #[test]
@@ -269,7 +281,10 @@ fn test_detects_port_conflict() {
 
     // Try to bind to the same port again - should fail
     let listener2 = TcpListener::bind(("127.0.0.1", port));
-    assert!(listener2.is_err(), "Should not be able to bind to the same port twice");
+    assert!(
+        listener2.is_err(),
+        "Should not be able to bind to the same port twice"
+    );
 
     // Keep listener in scope until test ends
     drop(listener);
@@ -324,12 +339,15 @@ fn test_parses_package_json() {
 
     // Verify we can parse it
     let content = fs::read_to_string(&package_path).expect("Should read package.json");
-    let json: serde_json::Value = serde_json::from_str(&content)
-        .expect("Should parse package.json");
+    let json: serde_json::Value =
+        serde_json::from_str(&content).expect("Should parse package.json");
 
     assert_eq!(json["name"], "test-project", "Should parse name field");
     assert_eq!(json["version"], "1.0.0", "Should parse version field");
-    assert!(json["dependencies"].is_object(), "Should have dependencies object");
+    assert!(
+        json["dependencies"].is_object(),
+        "Should have dependencies object"
+    );
 }
 
 #[test]
@@ -347,11 +365,16 @@ fn test_detects_corbits_sdk() {
     let package_path = fixture.path().join("package.json");
 
     let content = fs::read_to_string(&package_path).expect("Should read package.json");
-    let json: serde_json::Value = serde_json::from_str(&content)
-        .expect("Should parse package.json");
+    let json: serde_json::Value =
+        serde_json::from_str(&content).expect("Should parse package.json");
 
-    let dependencies = json["dependencies"].as_object().expect("Should have dependencies");
-    assert!(dependencies.contains_key("@corbits/sdk"), "Should detect Corbits SDK");
+    let dependencies = json["dependencies"]
+        .as_object()
+        .expect("Should have dependencies");
+    assert!(
+        dependencies.contains_key("@corbits/sdk"),
+        "Should detect Corbits SDK"
+    );
 }
 
 #[test]
@@ -370,12 +393,20 @@ fn test_detects_payai_packages() {
     let package_path = fixture.path().join("package.json");
 
     let content = fs::read_to_string(&package_path).expect("Should read package.json");
-    let json: serde_json::Value = serde_json::from_str(&content)
-        .expect("Should parse package.json");
+    let json: serde_json::Value =
+        serde_json::from_str(&content).expect("Should parse package.json");
 
-    let dependencies = json["dependencies"].as_object().expect("Should have dependencies");
-    assert!(dependencies.contains_key("@payai/core"), "Should detect PayAI core");
-    assert!(dependencies.contains_key("@payai/solana"), "Should detect PayAI solana");
+    let dependencies = json["dependencies"]
+        .as_object()
+        .expect("Should have dependencies");
+    assert!(
+        dependencies.contains_key("@payai/core"),
+        "Should detect PayAI core"
+    );
+    assert!(
+        dependencies.contains_key("@payai/solana"),
+        "Should detect PayAI solana"
+    );
 }
 
 #[test]
@@ -393,11 +424,16 @@ fn test_detects_cdp_sdk() {
     let package_path = fixture.path().join("package.json");
 
     let content = fs::read_to_string(&package_path).expect("Should read package.json");
-    let json: serde_json::Value = serde_json::from_str(&content)
-        .expect("Should parse package.json");
+    let json: serde_json::Value =
+        serde_json::from_str(&content).expect("Should parse package.json");
 
-    let dependencies = json["dependencies"].as_object().expect("Should have dependencies");
-    assert!(dependencies.contains_key("@cdp/sdk"), "Should detect CDP SDK");
+    let dependencies = json["dependencies"]
+        .as_object()
+        .expect("Should have dependencies");
+    assert!(
+        dependencies.contains_key("@cdp/sdk"),
+        "Should detect CDP SDK"
+    );
 }
 
 #[test]
@@ -446,8 +482,14 @@ fn test_includes_suggestions() {
     suggestions.push("Create config file: x402-dev init".to_string());
 
     assert_eq!(suggestions.len(), 2, "Should have 2 suggestions");
-    assert!(suggestions[0].contains("Node.js"), "First suggestion should mention Node.js");
-    assert!(suggestions[1].contains("config"), "Second suggestion should mention config");
+    assert!(
+        suggestions[0].contains("Node.js"),
+        "First suggestion should mention Node.js"
+    );
+    assert!(
+        suggestions[1].contains("config"),
+        "Second suggestion should mention config"
+    );
 }
 
 #[test]
@@ -478,10 +520,16 @@ fn test_json_output_format() {
     });
 
     // Verify it's valid JSON
-    let json_str = serde_json::to_string_pretty(&diagnostic_result)
-        .expect("Should serialize to JSON");
-    assert!(json_str.contains("status"), "JSON should contain status field");
-    assert!(json_str.contains("checks"), "JSON should contain checks field");
+    let json_str =
+        serde_json::to_string_pretty(&diagnostic_result).expect("Should serialize to JSON");
+    assert!(
+        json_str.contains("status"),
+        "JSON should contain status field"
+    );
+    assert!(
+        json_str.contains("checks"),
+        "JSON should contain checks field"
+    );
 }
 
 // ============================================================================
@@ -559,8 +607,14 @@ mock_delay_ms: 0
     fixture.create_config(config_content);
 
     // Verify both files exist
-    assert!(fixture.path().join("package.json").exists(), "package.json should exist");
-    assert!(fixture.path().join(".x402dev.yaml").exists(), "config should exist");
+    assert!(
+        fixture.path().join("package.json").exists(),
+        "package.json should exist"
+    );
+    assert!(
+        fixture.path().join(".x402dev.yaml").exists(),
+        "config should exist"
+    );
 }
 
 #[test]
@@ -568,8 +622,14 @@ fn test_minimal_diagnostic_no_config_no_packages() {
     let fixture = DoctorTestFixture::new();
 
     // Don't create any files - test bare minimum scenario
-    assert!(!fixture.path().join("package.json").exists(), "package.json should not exist");
-    assert!(!fixture.path().join(".x402dev.yaml").exists(), "config should not exist");
+    assert!(
+        !fixture.path().join("package.json").exists(),
+        "package.json should not exist"
+    );
+    assert!(
+        !fixture.path().join(".x402dev.yaml").exists(),
+        "config should not exist"
+    );
 
     // This should result in warnings but not fatal failures
     // The doctor command should still complete successfully
@@ -594,12 +654,20 @@ fn test_diagnostic_with_dev_dependencies() {
     let package_path = fixture.path().join("package.json");
 
     let content = fs::read_to_string(&package_path).expect("Should read package.json");
-    let json: serde_json::Value = serde_json::from_str(&content)
-        .expect("Should parse package.json");
+    let json: serde_json::Value =
+        serde_json::from_str(&content).expect("Should parse package.json");
 
-    let dev_deps = json["devDependencies"].as_object().expect("Should have devDependencies");
-    assert!(dev_deps.contains_key("@corbits/sdk"), "Should detect Corbits SDK in devDependencies");
-    assert!(dev_deps.contains_key("@payai/core"), "Should detect PayAI core in devDependencies");
+    let dev_deps = json["devDependencies"]
+        .as_object()
+        .expect("Should have devDependencies");
+    assert!(
+        dev_deps.contains_key("@corbits/sdk"),
+        "Should detect Corbits SDK in devDependencies"
+    );
+    assert!(
+        dev_deps.contains_key("@payai/core"),
+        "Should detect PayAI core in devDependencies"
+    );
 }
 
 #[test]
@@ -621,13 +689,24 @@ fn test_diagnostic_with_alternative_package_names() {
     let package_path = fixture.path().join("package.json");
 
     let content = fs::read_to_string(&package_path).expect("Should read package.json");
-    let json: serde_json::Value = serde_json::from_str(&content)
-        .expect("Should parse package.json");
+    let json: serde_json::Value =
+        serde_json::from_str(&content).expect("Should parse package.json");
 
-    let deps = json["dependencies"].as_object().expect("Should have dependencies");
-    assert!(deps.contains_key("corbits"), "Should detect corbits without @ prefix");
-    assert!(deps.contains_key("payai"), "Should detect payai without @ prefix");
-    assert!(deps.contains_key("cdp"), "Should detect cdp without @ prefix");
+    let deps = json["dependencies"]
+        .as_object()
+        .expect("Should have dependencies");
+    assert!(
+        deps.contains_key("corbits"),
+        "Should detect corbits without @ prefix"
+    );
+    assert!(
+        deps.contains_key("payai"),
+        "Should detect payai without @ prefix"
+    );
+    assert!(
+        deps.contains_key("cdp"),
+        "Should detect cdp without @ prefix"
+    );
 }
 
 #[test]
@@ -646,8 +725,14 @@ mock_delay_ms: 100
     let config_path = fixture.path().join(".x402dev.yaml");
 
     let content = fs::read_to_string(&config_path).expect("Should read config");
-    assert!(content.contains("port: 8080"), "Config should have custom port");
-    assert!(content.contains("log_level: debug"), "Config should have debug log level");
+    assert!(
+        content.contains("port: 8080"),
+        "Config should have custom port"
+    );
+    assert!(
+        content.contains("log_level: debug"),
+        "Config should have debug log level"
+    );
 }
 
 #[test]
@@ -658,11 +743,17 @@ fn test_summary_generation() {
     let mut suggestions: Vec<String> = Vec::new();
 
     // Case 1: No issues
-    assert!(warnings.is_empty() && failures.is_empty(), "Should have no issues");
+    assert!(
+        warnings.is_empty() && failures.is_empty(),
+        "Should have no issues"
+    );
 
     // Case 2: Only warnings
     warnings.push("npm not detected".to_string());
-    assert!(!warnings.is_empty() && failures.is_empty(), "Should have only warnings");
+    assert!(
+        !warnings.is_empty() && failures.is_empty(),
+        "Should have only warnings"
+    );
 
     // Case 3: Failures present
     failures.push("Config validation failed".to_string());

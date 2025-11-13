@@ -4,11 +4,11 @@
 // These tests ensure that the policy engine works correctly when
 // handling multiple concurrent requests from a multi-threaded server
 
-use x402_core::policy::state::PolicyState;
-use x402_core::policy::runtime_types::{RateLimitConfig, SpendingCapConfig};
 use std::sync::Arc;
 use std::thread;
-use std::time::{SystemTime, Duration};
+use std::time::{Duration, SystemTime};
+use x402_core::policy::runtime_types::{RateLimitConfig, SpendingCapConfig};
+use x402_core::policy::state::PolicyState;
 
 /// Test: Concurrent rate limit state access
 #[test]
@@ -149,7 +149,8 @@ fn test_concurrent_rate_limit_checking() {
 
             for _ in 0..20 {
                 let rate_state = state_clone.get_rate_limit_state(key);
-                let _is_limited = !rate_state.check_limit(config_clone.window, config_clone.max_requests, now);
+                let _is_limited =
+                    !rate_state.check_limit(config_clone.window, config_clone.max_requests, now);
 
                 // Should get consistent results
                 // (May change over time as more requests are added by other threads)
@@ -194,14 +195,19 @@ fn test_high_frequency_concurrent_updates() {
     }
 
     for handle in handles {
-        handle.join().expect("Thread should not panic during stress test");
+        handle
+            .join()
+            .expect("Thread should not panic during stress test");
     }
 
     let elapsed = start.elapsed().unwrap();
 
     // Should complete reasonably quickly (within 10 seconds for 16k operations)
-    assert!(elapsed < Duration::from_secs(10),
-        "Stress test took too long: {:?}", elapsed);
+    assert!(
+        elapsed < Duration::from_secs(10),
+        "Stress test took too long: {:?}",
+        elapsed
+    );
 }
 
 /// Test: Concurrent cleanup of expired entries
@@ -309,12 +315,8 @@ fn test_concurrent_spending_cap_checking() {
                 // Check if cap exceeded
                 let check_state = state_clone.get_spending_state(key);
                 let max_in_cents = (config.max_amount * 100.0) as u64;
-                let _exceeds = !check_state.check_cap(
-                    config.window,
-                    max_in_cents,
-                    10,
-                    SystemTime::now()
-                );
+                let _exceeds =
+                    !check_state.check_cap(config.window, max_in_cents, 10, SystemTime::now());
             }
         });
         handles.push(handle);

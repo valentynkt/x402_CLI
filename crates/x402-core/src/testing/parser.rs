@@ -3,6 +3,7 @@
 use anyhow::Result;
 use serde::Deserialize;
 use std::path::Path;
+use std::str::FromStr;
 
 /// A complete test suite from YAML file
 #[derive(Debug, Deserialize)]
@@ -60,6 +61,15 @@ impl TestSuite {
 
     /// Parse YAML test suite from string
     pub fn from_str(yaml: &str) -> Result<Self> {
+        yaml.parse()
+    }
+}
+
+/// Implement FromStr trait for standard string parsing
+impl FromStr for TestSuite {
+    type Err = anyhow::Error;
+
+    fn from_str(yaml: &str) -> Result<Self, Self::Err> {
         let suite: TestSuite = serde_yaml::from_str(yaml)?;
 
         if suite.tests.is_empty() {

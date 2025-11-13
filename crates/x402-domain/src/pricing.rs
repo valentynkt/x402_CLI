@@ -179,7 +179,9 @@ impl PricingConfig {
     /// - Resource paths are valid
     pub fn validate(&self) -> DomainResult<()> {
         if self.currency.is_empty() {
-            return Err(DomainError::InvalidAmount("Currency cannot be empty".into()));
+            return Err(DomainError::InvalidAmount(
+                "Currency cannot be empty".into(),
+            ));
         }
 
         // Validate all resource paths

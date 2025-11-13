@@ -3,7 +3,10 @@ use crate::error::{DomainError, DomainResult};
 /// Validates that a string is non-empty
 pub fn validate_non_empty(s: &str, field_name: &str) -> DomainResult<()> {
     if s.is_empty() {
-        Err(DomainError::InvalidAgentId(format!("{} cannot be empty", field_name)))
+        Err(DomainError::InvalidAgentId(format!(
+            "{} cannot be empty",
+            field_name
+        )))
     } else {
         Ok(())
     }
@@ -13,7 +16,7 @@ pub fn validate_non_empty(s: &str, field_name: &str) -> DomainResult<()> {
 pub fn validate_uuid_format(s: &str) -> DomainResult<()> {
     if s.len() != 36 {
         return Err(DomainError::InvalidInvoiceMemo(
-            "UUID must be 36 characters".into()
+            "UUID must be 36 characters".into(),
         ));
     }
 
@@ -21,21 +24,25 @@ pub fn validate_uuid_format(s: &str) -> DomainResult<()> {
     let parts: Vec<&str> = s.split('-').collect();
     if parts.len() != 5 {
         return Err(DomainError::InvalidInvoiceMemo(
-            "UUID must have format XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX".into()
+            "UUID must have format XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX".into(),
         ));
     }
 
-    if parts[0].len() != 8 || parts[1].len() != 4 || parts[2].len() != 4
-        || parts[3].len() != 4 || parts[4].len() != 12 {
+    if parts[0].len() != 8
+        || parts[1].len() != 4
+        || parts[2].len() != 4
+        || parts[3].len() != 4
+        || parts[4].len() != 12
+    {
         return Err(DomainError::InvalidInvoiceMemo(
-            "UUID has incorrect segment lengths".into()
+            "UUID has incorrect segment lengths".into(),
         ));
     }
 
     // Check all characters are hex digits or hyphens
     if !s.chars().all(|c| c.is_ascii_hexdigit() || c == '-') {
         return Err(DomainError::InvalidInvoiceMemo(
-            "UUID must contain only hex digits and hyphens".into()
+            "UUID must contain only hex digits and hyphens".into(),
         ));
     }
 
@@ -46,7 +53,7 @@ pub fn validate_uuid_format(s: &str) -> DomainResult<()> {
 pub fn validate_solana_address(s: &str) -> DomainResult<()> {
     if s.len() < 32 || s.len() > 44 {
         return Err(DomainError::InvalidSolanaAddress(
-            "length must be between 32 and 44 characters".into()
+            "length must be between 32 and 44 characters".into(),
         ));
     }
 
@@ -54,7 +61,7 @@ pub fn validate_solana_address(s: &str) -> DomainResult<()> {
     const BASE58_CHARS: &str = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
     if !s.chars().all(|c| BASE58_CHARS.contains(c)) {
         return Err(DomainError::InvalidSolanaAddress(
-            "contains invalid Base58 characters (excludes 0, O, I, l)".into()
+            "contains invalid Base58 characters (excludes 0, O, I, l)".into(),
         ));
     }
 
@@ -69,7 +76,7 @@ pub fn validate_resource_path(s: &str) -> DomainResult<()> {
 
     if !s.starts_with('/') {
         return Err(DomainError::InvalidResourcePath(
-            "must start with '/'".into()
+            "must start with '/'".into(),
         ));
     }
 
@@ -78,7 +85,7 @@ pub fn validate_resource_path(s: &str) -> DomainResult<()> {
         c.is_alphanumeric() || c == '/' || c == '-' || c == '_' || c == '.' || c == '~' || c == '*'
     }) {
         return Err(DomainError::InvalidResourcePath(
-            "contains invalid path characters".into()
+            "contains invalid path characters".into(),
         ));
     }
 
@@ -89,7 +96,7 @@ pub fn validate_resource_path(s: &str) -> DomainResult<()> {
 pub fn validate_port(port: u16) -> DomainResult<()> {
     if port < 1024 {
         Err(DomainError::InvalidPort(
-            "must be >= 1024 (non-privileged port)".into()
+            "must be >= 1024 (non-privileged port)".into(),
         ))
     } else {
         Ok(())
@@ -125,7 +132,7 @@ mod tests {
         // Invalid addresses
         assert!(validate_solana_address("").is_err()); // Too short
         assert!(validate_solana_address("abc").is_err()); // Too short
-        assert!(validate_solana_address("0OIl" .repeat(11).as_str()).is_err()); // Invalid chars
+        assert!(validate_solana_address("0OIl".repeat(11).as_str()).is_err()); // Invalid chars
     }
 
     #[test]

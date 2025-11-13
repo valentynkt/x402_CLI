@@ -5,12 +5,12 @@ use anyhow::{Context, Result};
 use clap::{Args, Subcommand};
 use colored::Colorize;
 use std::path::PathBuf;
+use x402_core::policy::rules::PolicyFile;
+use x402_core::policy::types::PolicyConfig;
 use x402_core::policy::{
     codegen::{generate_express_middleware, generate_fastify_plugin},
     validate_policies, IssueType, ValidationReport,
 };
-use x402_core::policy::rules::PolicyFile;
-use x402_core::policy::types::PolicyConfig;
 
 #[derive(Args)]
 #[command(after_help = "\
@@ -85,8 +85,8 @@ fn validate_command(file: PathBuf) -> Result<()> {
     let policy_content = std::fs::read_to_string(&file)
         .with_context(|| format!("Failed to read policy file: {}", file.display()))?;
 
-    let policy_file: PolicyFile = serde_yaml::from_str(&policy_content)
-        .context("Failed to parse YAML policy file")?;
+    let policy_file: PolicyFile =
+        serde_yaml::from_str(&policy_content).context("Failed to parse YAML policy file")?;
 
     // Convert PolicyFile to PolicyConfig for validation
     let policy_config = PolicyConfig {
@@ -106,7 +106,10 @@ fn validate_command(file: PathBuf) -> Result<()> {
     if !report.has_warnings {
         println!("\n{} Policy file is valid!", "".green().bold());
     } else {
-        println!("\n{} Policy file is valid (with warnings)", "�".yellow().bold());
+        println!(
+            "\n{} Policy file is valid (with warnings)",
+            "�".yellow().bold()
+        );
     }
 
     Ok(())
@@ -122,8 +125,8 @@ fn generate_command(file: PathBuf, framework: Framework, output: Option<PathBuf>
     let policy_content = std::fs::read_to_string(&file)
         .with_context(|| format!("Failed to read policy file: {}", file.display()))?;
 
-    let policy_file: PolicyFile = serde_yaml::from_str(&policy_content)
-        .context("Failed to parse YAML policy file")?;
+    let policy_file: PolicyFile =
+        serde_yaml::from_str(&policy_content).context("Failed to parse YAML policy file")?;
 
     // Convert PolicyFile to PolicyConfig for validation
     let policy_config = PolicyConfig {
@@ -139,17 +142,14 @@ fn generate_command(file: PathBuf, framework: Framework, output: Option<PathBuf>
     }
 
     // Generate code with policy filename
-    let policy_filename = file.file_name()
+    let policy_filename = file
+        .file_name()
         .and_then(|n| n.to_str())
         .unwrap_or("policy.yaml");
 
     let generated_code = match framework {
-        Framework::Express => {
-            generate_express_middleware(&policy_file, policy_filename)
-        }
-        Framework::Fastify => {
-            generate_fastify_plugin(&policy_file.policies, Some(policy_filename))
-        }
+        Framework::Express => generate_express_middleware(&policy_file, policy_filename),
+        Framework::Fastify => generate_fastify_plugin(&policy_file.policies, Some(policy_filename)),
     };
 
     // Output code
@@ -162,10 +162,7 @@ fn generate_command(file: PathBuf, framework: Framework, output: Option<PathBuf>
             output_path.display()
         );
         println!("  Lines: {}", generated_code.lines().count());
-        println!(
-            "  Size: {} bytes",
-            generated_code.len()
-        );
+        println!("  Size: {} bytes", generated_code.len());
     } else {
         // Print to stdout
         println!("{}", generated_code);
@@ -197,7 +194,11 @@ fn display_validation_report(report: &ValidationReport) {
         }
 
         if !issue.policy_indices.is_empty() {
-            let indices: Vec<String> = issue.policy_indices.iter().map(|i| format!("#{}", i)).collect();
+            let indices: Vec<String> = issue
+                .policy_indices
+                .iter()
+                .map(|i| format!("#{}", i))
+                .collect();
             println!("   Policies: {}", indices.join(", ").dimmed());
         }
 

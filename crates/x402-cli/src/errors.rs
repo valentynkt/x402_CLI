@@ -42,9 +42,7 @@ pub enum CliError {
         source: std::io::Error,
     },
     /// Other errors (exit code 1)
-    Other {
-        message: String,
-    },
+    Other { message: String },
 }
 
 impl CliError {
@@ -235,7 +233,11 @@ pub fn print_error(error: &CliError, verbose: bool, debug: bool) {
 
     // Print docs link if available
     if let Some(link) = error.docs_link() {
-        eprintln!("\n{} {}", "📖".cyan(), format!("Documentation: {}", link).cyan());
+        eprintln!(
+            "\n{} {}",
+            "📖".cyan(),
+            format!("Documentation: {}", link).cyan()
+        );
     }
 
     // Print verbose/debug info

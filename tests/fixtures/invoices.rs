@@ -44,10 +44,10 @@ pub const VALID_TEST_ADDRESSES: &[&str] = &[
 
 /// Invalid addresses for testing validation errors
 pub const INVALID_ADDRESSES: &[&str] = &[
-    "",                              // Empty
-    "abc",                           // Too short
+    "",                                         // Empty
+    "abc",                                      // Too short
     "0OIl0OIl0OIl0OIl0OIl0OIl0OIl0OIl0OIl0OIl", // Invalid Base58 chars
-    "ThisContainsInvalidChars!@#$%^&*()",        // Invalid characters
+    "ThisContainsInvalidChars!@#$%^&*()",       // Invalid characters
 ];
 
 /// Returns a valid invoice for devnet
@@ -198,7 +198,8 @@ pub fn invoice_missing_required_fields(variant: &str) -> String {
             "timestamp": "2024-01-01T00:00:00Z",
             "resource_path": "/api/data",
             "expires_at": "2024-01-01T00:05:00Z"
-        }"#.to_string(),
+        }"#
+        .to_string(),
 
         "no_amount" => r#"{
             "recipient": "GXk8vTest1111111111111111111111111111qPz9",
@@ -208,7 +209,8 @@ pub fn invoice_missing_required_fields(variant: &str) -> String {
             "timestamp": "2024-01-01T00:00:00Z",
             "resource_path": "/api/data",
             "expires_at": "2024-01-01T00:05:00Z"
-        }"#.to_string(),
+        }"#
+        .to_string(),
 
         "no_currency" => r#"{
             "recipient": "GXk8vTest1111111111111111111111111111qPz9",
@@ -218,7 +220,8 @@ pub fn invoice_missing_required_fields(variant: &str) -> String {
             "timestamp": "2024-01-01T00:00:00Z",
             "resource_path": "/api/data",
             "expires_at": "2024-01-01T00:05:00Z"
-        }"#.to_string(),
+        }"#
+        .to_string(),
 
         "no_memo" => r#"{
             "recipient": "GXk8vTest1111111111111111111111111111qPz9",
@@ -228,7 +231,8 @@ pub fn invoice_missing_required_fields(variant: &str) -> String {
             "timestamp": "2024-01-01T00:00:00Z",
             "resource_path": "/api/data",
             "expires_at": "2024-01-01T00:05:00Z"
-        }"#.to_string(),
+        }"#
+        .to_string(),
 
         "no_network" => r#"{
             "recipient": "GXk8vTest1111111111111111111111111111qPz9",
@@ -238,7 +242,8 @@ pub fn invoice_missing_required_fields(variant: &str) -> String {
             "timestamp": "2024-01-01T00:00:00Z",
             "resource_path": "/api/data",
             "expires_at": "2024-01-01T00:05:00Z"
-        }"#.to_string(),
+        }"#
+        .to_string(),
 
         _ => panic!("Unknown variant: {}", variant),
     }
@@ -371,14 +376,27 @@ mod tests {
 
     #[test]
     fn test_memo_variants() {
-        let variants = vec!["empty", "not_uuid", "wrong_format", "no_hyphens", "invalid_chars"];
+        let variants = vec![
+            "empty",
+            "not_uuid",
+            "wrong_format",
+            "no_hyphens",
+            "invalid_chars",
+        ];
         for variant in variants {
             let invoice = invoice_with_malformed_memo(variant);
             // Valid UUID format: 36 characters with 4 hyphens and only hex digits
             let is_valid_uuid = invoice.memo.len() == 36
                 && invoice.memo.matches('-').count() == 4
-                && invoice.memo.chars().all(|c| c.is_ascii_hexdigit() || c == '-');
-            assert!(!is_valid_uuid, "Variant {} should have invalid memo", variant);
+                && invoice
+                    .memo
+                    .chars()
+                    .all(|c| c.is_ascii_hexdigit() || c == '-');
+            assert!(
+                !is_valid_uuid,
+                "Variant {} should have invalid memo",
+                variant
+            );
         }
     }
 
@@ -409,7 +427,13 @@ mod tests {
 
     #[test]
     fn test_missing_fields_variants() {
-        let variants = vec!["no_recipient", "no_amount", "no_currency", "no_memo", "no_network"];
+        let variants = vec![
+            "no_recipient",
+            "no_amount",
+            "no_currency",
+            "no_memo",
+            "no_network",
+        ];
         for variant in variants {
             let json = invoice_missing_required_fields(variant);
             assert!(!json.is_empty(), "Variant {} should not be empty", variant);

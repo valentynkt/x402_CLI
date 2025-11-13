@@ -83,10 +83,7 @@ pub mod validation;
 pub use amount::{Amount, Currency};
 pub use error::{DomainError, DomainResult};
 pub use pricing::PricingConfig;
-pub use types::{
-    AgentId, PolicyId, InvoiceMemo, SolanaAddress,
-    ResourcePath, Port
-};
+pub use types::{AgentId, InvoiceMemo, PolicyId, Port, ResourcePath, SolanaAddress};
 
 // Re-export rust_decimal for users
 pub use rust_decimal::Decimal;

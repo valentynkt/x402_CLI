@@ -5,8 +5,8 @@
 
 use assert_cmd::Command;
 use predicates::prelude::*;
-use tempfile::TempDir;
 use std::fs;
+use tempfile::TempDir;
 
 /// Helper to create a test command
 fn cli() -> Command {
@@ -152,9 +152,7 @@ policies:
         .args(&["policy", "validate", policy_path.to_str().unwrap()])
         .assert()
         .failure()
-        .stdout(predicate::str::contains("CONFLICT").or(
-            predicate::str::contains("ERROR")
-        ))
+        .stdout(predicate::str::contains("CONFLICT").or(predicate::str::contains("ERROR")))
         .stderr(predicate::str::contains("Policy validation failed"));
 }
 
@@ -277,12 +275,9 @@ policies:
 /// Test: Invalid command shows helpful error
 #[test]
 fn test_invalid_command() {
-    cli()
-        .args(&["invalid-command"])
-        .assert()
-        .failure()
-        .stderr(predicate::str::contains("unrecognized subcommand")
-            .or(predicate::str::contains("error")));
+    cli().args(&["invalid-command"]).assert().failure().stderr(
+        predicate::str::contains("unrecognized subcommand").or(predicate::str::contains("error")),
+    );
 }
 
 /// Test: Missing required arguments shows error
@@ -302,8 +297,7 @@ fn test_version_subcommand() {
         .arg("version")
         .assert()
         .success()
-        .stdout(predicate::str::contains("x402-dev")
-            .or(predicate::str::contains("version")));
+        .stdout(predicate::str::contains("x402-dev").or(predicate::str::contains("version")));
 }
 
 /// Test: Policy file not found error
@@ -313,9 +307,10 @@ fn test_policy_file_not_found() {
         .args(&["policy", "validate", "/nonexistent/policy.yaml"])
         .assert()
         .failure()
-        .stderr(predicate::str::contains("I/O operation failed").or(
-            predicate::str::contains("entity not found")
-        ));
+        .stderr(
+            predicate::str::contains("I/O operation failed")
+                .or(predicate::str::contains("entity not found")),
+        );
 }
 
 /// Test: Generate with invalid framework
@@ -407,10 +402,7 @@ policies:
 #[test]
 fn test_exit_codes() {
     // Success case: exit code 0
-    cli()
-        .arg("--help")
-        .assert()
-        .code(0);
+    cli().arg("--help").assert().code(0);
 
     // Failure case: non-zero exit code
     cli()

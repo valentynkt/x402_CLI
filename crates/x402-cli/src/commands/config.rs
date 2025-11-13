@@ -1,6 +1,6 @@
-use anyhow::Result;
 use crate::cli::ConfigArgs;
 use crate::config::{load_merged_config_with_sources, CliOverrides};
+use anyhow::Result;
 
 /// Run the config command
 pub async fn run(args: &ConfigArgs) -> Result<()> {

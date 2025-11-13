@@ -17,13 +17,8 @@ pub struct Request {
 /// Policy evaluation decision
 #[derive(Debug, Clone, PartialEq)]
 pub enum PolicyDecision {
-    Allow {
-        policy_id: String,
-    },
-    Deny {
-        reason: String,
-        policy_id: String,
-    },
+    Allow { policy_id: String },
+    Deny { reason: String, policy_id: String },
 }
 
 impl PolicyDecision {

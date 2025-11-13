@@ -28,14 +28,29 @@ const EXAMPLES: &[ExampleInfo] = &[
         name: "ai-agent-policies",
         description: "AI agent with spending limits and allowlists",
         complexity: "~100 lines",
-        files: &["agent.rs", "policy.yaml", "README.md", "Cargo.toml", "middleware.js"],
-        prerequisites: &["Rust 1.75+", "x402-dev policy engine", "Node.js (for middleware)"],
+        files: &[
+            "agent.rs",
+            "policy.yaml",
+            "README.md",
+            "Cargo.toml",
+            "middleware.js",
+        ],
+        prerequisites: &[
+            "Rust 1.75+",
+            "x402-dev policy engine",
+            "Node.js (for middleware)",
+        ],
     },
     ExampleInfo {
         name: "cicd-testing",
         description: "GitHub Actions workflow for automated testing",
         complexity: "YAML config",
-        files: &[".github/workflows/x402-test.yaml", "tests/suite.yaml", "README.md", ".x402dev.yaml"],
+        files: &[
+            ".github/workflows/x402-test.yaml",
+            "tests/suite.yaml",
+            "README.md",
+            ".x402dev.yaml",
+        ],
         prerequisites: &["GitHub repository", "x402-dev installed"],
     },
 ];
@@ -45,17 +60,24 @@ pub async fn run(args: &ExamplesArgs) -> Result<()> {
     match args.command.as_deref() {
         Some("list") | None => list_examples(),
         Some("info") => {
-            let name = args.name.as_deref()
+            let name = args
+                .name
+                .as_deref()
                 .context("Example name required. Usage: x402-dev examples info <name>")?;
             show_info(name)
         }
         Some("init") => {
-            let name = args.name.as_deref()
+            let name = args
+                .name
+                .as_deref()
                 .context("Example name required. Usage: x402-dev examples init <name>")?;
             init_example(name).await
         }
         Some(cmd) => {
-            anyhow::bail!("Unknown examples subcommand: '{}'\nUse: list, info, or init", cmd)
+            anyhow::bail!(
+                "Unknown examples subcommand: '{}'\nUse: list, info, or init",
+                cmd
+            )
         }
     }
 }
@@ -78,8 +100,16 @@ fn list_examples() -> Result<()> {
 
     println!();
     println!("{}", "Usage:".bold());
-    println!("  {} {}", "x402-dev examples info".dimmed(), "<name>".yellow());
-    println!("  {} {}", "x402-dev examples init".dimmed(), "<name>".yellow());
+    println!(
+        "  {} {}",
+        "x402-dev examples info".dimmed(),
+        "<name>".yellow()
+    );
+    println!(
+        "  {} {}",
+        "x402-dev examples init".dimmed(),
+        "<name>".yellow()
+    );
     println!();
     println!("{}", "Examples:".dimmed());
     println!("  x402-dev examples info mcp-server-starter");
@@ -90,13 +120,19 @@ fn list_examples() -> Result<()> {
 
 /// Show detailed information about an example
 fn show_info(name: &str) -> Result<()> {
-    let example = EXAMPLES
-        .iter()
-        .find(|e| e.name == name)
-        .with_context(|| format!("Example '{}' not found. Run 'x402-dev examples list' to see available examples.", name))?;
+    let example = EXAMPLES.iter().find(|e| e.name == name).with_context(|| {
+        format!(
+            "Example '{}' not found. Run 'x402-dev examples list' to see available examples.",
+            name
+        )
+    })?;
 
     println!();
-    println!("{} {}", "Example:".bold().cyan(), example.name.green().bold());
+    println!(
+        "{} {}",
+        "Example:".bold().cyan(),
+        example.name.green().bold()
+    );
     println!("{}", "=".repeat(40).cyan());
     println!();
 
@@ -118,11 +154,18 @@ fn show_info(name: &str) -> Result<()> {
 
     println!("{}", "Next steps:".bold().green());
     println!("  1. Initialize example:");
-    println!("     {} {}", "x402-dev examples init".dimmed(), example.name.yellow());
+    println!(
+        "     {} {}",
+        "x402-dev examples init".dimmed(),
+        example.name.yellow()
+    );
     println!();
     println!("  2. Follow README.md in the created directory");
     println!();
-    println!("  3. Estimated setup time: {} {}", "<2 minutes".green().bold(), "⏱️");
+    println!(
+        "  3. Estimated setup time: {} ⏱️",
+        "<2 minutes".green().bold()
+    );
     println!();
 
     Ok(())
@@ -131,13 +174,20 @@ fn show_info(name: &str) -> Result<()> {
 /// Initialize an example project in the current directory
 async fn init_example(name: &str) -> Result<()> {
     // Validate example exists
-    let example = EXAMPLES
-        .iter()
-        .find(|e| e.name == name)
-        .with_context(|| format!("Example '{}' not found. Run 'x402-dev examples list' to see available examples.", name))?;
+    let example = EXAMPLES.iter().find(|e| e.name == name).with_context(|| {
+        format!(
+            "Example '{}' not found. Run 'x402-dev examples list' to see available examples.",
+            name
+        )
+    })?;
 
     println!();
-    println!("{} {} {}", "Initializing".cyan(), example.name.green().bold(), "example...".cyan());
+    println!(
+        "{} {} {}",
+        "Initializing".cyan(),
+        example.name.green().bold(),
+        "example...".cyan()
+    );
     println!();
 
     // Get the examples source directory (relative to binary location)
@@ -165,7 +215,11 @@ async fn init_example(name: &str) -> Result<()> {
     // Check for existing files and warn user
     let conflicts = check_conflicts(&source_path, &dest_path)?;
     if !conflicts.is_empty() {
-        println!("{} {} existing files will be overwritten:", "⚠️".yellow(), "Warning:".bold().yellow());
+        println!(
+            "{} {} existing files will be overwritten:",
+            "⚠️".yellow(),
+            "Warning:".bold().yellow()
+        );
         for conflict in &conflicts {
             println!("  {} {}", "•".yellow(), conflict.dimmed());
         }
@@ -181,7 +235,11 @@ async fn init_example(name: &str) -> Result<()> {
     let copied_files = copy_example_files(&source_path, &dest_path)?;
 
     // Success message
-    println!("{} {} example initialized successfully!", "✅".green(), example.name.green().bold());
+    println!(
+        "{} {} example initialized successfully!",
+        "✅".green(),
+        example.name.green().bold()
+    );
     println!();
     println!("{} {} files created:", "📝".cyan(), "Files:".bold());
     for file in &copied_files {
@@ -199,7 +257,10 @@ async fn init_example(name: &str) -> Result<()> {
     println!();
     println!("  3. Follow the quickstart guide in README.md");
     println!();
-    println!("{} Estimated setup time: {} {}", "⏱️", "<2 minutes".green().bold(), "(from init to running)");
+    println!(
+        "⏱️ Estimated setup time: {} (from init to running)",
+        "<2 minutes".green().bold()
+    );
     println!();
 
     Ok(())
@@ -288,7 +349,8 @@ fn copy_example_files(source: &Path, dest: &Path) -> Result<Vec<String>> {
                 fs::copy(&path, &dest_path)?;
 
                 // Track relative path for reporting
-                let relative = dest_path.strip_prefix(base)
+                let relative = dest_path
+                    .strip_prefix(base)
                     .unwrap_or(&dest_path)
                     .to_string_lossy()
                     .to_string();

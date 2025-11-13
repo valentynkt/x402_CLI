@@ -147,44 +147,51 @@ pub fn invalid_config_yaml(variant: &str) -> String {
         "port_too_low" => r#"
 port: 1023
 solana_rpc: "https://api.devnet.solana.com"
-"#.to_string(),
+"#
+        .to_string(),
 
         "port_too_high" => r#"
 port: 65536
 solana_rpc: "https://api.devnet.solana.com"
-"#.to_string(),
+"#
+        .to_string(),
 
         "invalid_rpc_url" => r#"
 port: 8402
 solana_rpc: "not-a-valid-url"
 log_level: info
-"#.to_string(),
+"#
+        .to_string(),
 
         "invalid_log_level" => r#"
 port: 8402
 solana_rpc: "https://api.devnet.solana.com"
 log_level: invalid_level
-"#.to_string(),
+"#
+        .to_string(),
 
         "invalid_simulation_mode" => r#"
 port: 8402
 solana_rpc: "https://api.devnet.solana.com"
 simulation_mode: invalid_mode
-"#.to_string(),
+"#
+        .to_string(),
 
         "negative_pricing" => r#"
 port: 8402
 solana_rpc: "https://api.devnet.solana.com"
 pricing:
   default: -0.01
-"#.to_string(),
+"#
+        .to_string(),
 
         "excessive_pricing" => r#"
 port: 8402
 solana_rpc: "https://api.devnet.solana.com"
 pricing:
   default: 101.0
-"#.to_string(),
+"#
+        .to_string(),
 
         "negative_per_resource_pricing" => r#"
 port: 8402
@@ -193,19 +200,22 @@ pricing:
   default: 0.01
   per_resource:
     /api/test: -0.05
-"#.to_string(),
+"#
+        .to_string(),
 
         "timeout_too_low" => r#"
 port: 8402
 solana_rpc: "https://api.devnet.solana.com"
 timeout_delay_ms: 50
-"#.to_string(),
+"#
+        .to_string(),
 
         "timeout_too_high" => r#"
 port: 8402
 solana_rpc: "https://api.devnet.solana.com"
 timeout_delay_ms: 61000
-"#.to_string(),
+"#
+        .to_string(),
 
         _ => panic!("Unknown variant: {}", variant),
     }

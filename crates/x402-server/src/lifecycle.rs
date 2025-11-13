@@ -1,8 +1,8 @@
-use anyhow::{anyhow, Result};
 use crate::process::{
     delete_pid_file, is_server_running, read_pid_file, stop_server_process, write_pid_file,
 };
 use crate::server::{MockServer, MockServerConfig};
+use anyhow::{anyhow, Result};
 
 // ============================================================================
 // Command Handlers
@@ -10,8 +10,8 @@ use crate::server::{MockServer, MockServerConfig};
 
 /// Handle stop command
 pub async fn stop_server() -> Result<()> {
-    let pid = read_pid_file()
-        .ok_or_else(|| anyhow!("No PID file found. Server is not running."))?;
+    let pid =
+        read_pid_file().ok_or_else(|| anyhow!("No PID file found. Server is not running."))?;
 
     if !is_server_running(pid) {
         delete_pid_file()?;
@@ -88,9 +88,18 @@ pub async fn start_server(server_config: MockServerConfig) -> Result<()> {
 
     println!("🚀 Starting x402 mock facilitator server on port {}", port);
     println!("📋 Server will respond with 402 Payment Required to all requests");
-    println!("💰 Default pricing: {} SOL/USDC", server_config.config.pricing.default);
-    println!("🎭 Simulation mode: {:?}", server_config.config.simulation_mode);
-    println!("⏱️  Timeout delay: {}ms", server_config.config.timeout_delay_ms);
+    println!(
+        "💰 Default pricing: {} SOL/USDC",
+        server_config.config.pricing.default
+    );
+    println!(
+        "🎭 Simulation mode: {:?}",
+        server_config.config.simulation_mode
+    );
+    println!(
+        "⏱️  Timeout delay: {}ms",
+        server_config.config.timeout_delay_ms
+    );
 
     if !server_config.config.pricing.per_resource.is_empty() {
         println!("📊 Per-resource pricing rules:");

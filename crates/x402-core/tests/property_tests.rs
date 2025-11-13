@@ -5,9 +5,9 @@
 // that should always hold true, regardless of specific values.
 
 use proptest::prelude::*;
+use std::time::{Duration, SystemTime};
 use x402_core::policy::types::{PolicyConfig, PolicyRule};
 use x402_core::policy::{RateLimitConfig, SpendingCapConfig};
-use std::time::{SystemTime, Duration};
 
 /// Property: Wildcard patterns should always match more broadly than exact matches
 ///

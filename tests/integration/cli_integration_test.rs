@@ -54,9 +54,7 @@ async fn test_check_command_with_mock_server() {
 
     for attempt in 1..=max_retries {
         let mut cmd = Command::cargo_bin("x402-dev").unwrap();
-        cmd.arg("check")
-            .arg(&url)
-            .timeout(Duration::from_secs(15));
+        cmd.arg("check").arg(&url).timeout(Duration::from_secs(15));
 
         let result = cmd.output();
 
@@ -322,9 +320,9 @@ fn test_verbose_output_flag() {
         .arg("doctor")
         .timeout(Duration::from_secs(10));
 
-    cmd.assert()
-        .success()
-        .stdout(predicate::str::contains("Diagnostics").or(predicate::str::contains("Environment")));
+    cmd.assert().success().stdout(
+        predicate::str::contains("Diagnostics").or(predicate::str::contains("Environment")),
+    );
 
     // Test verbose with config show
     let mut cmd = Command::cargo_bin("x402-dev").unwrap();
@@ -349,7 +347,9 @@ fn test_version_command() {
 #[test]
 fn test_config_show_command() {
     let mut cmd = Command::cargo_bin("x402-dev").unwrap();
-    cmd.arg("config").arg("show").timeout(Duration::from_secs(5));
+    cmd.arg("config")
+        .arg("show")
+        .timeout(Duration::from_secs(5));
 
     cmd.assert()
         .success()

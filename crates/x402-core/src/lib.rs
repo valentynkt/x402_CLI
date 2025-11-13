@@ -11,10 +11,20 @@ pub mod policy;
 pub mod testing;
 
 pub use policy::{
-    validate_policies, IssueType, PolicyAction, PolicyConfig, PolicyRule, PolicyType,
-    ResolutionSuggestion, ValidationIssue, ValidationReport,
+    validate_policies,
+    IssueType,
+    PolicyAction,
+    PolicyConfig,
+    PolicyDecision,
     // Runtime types
-    PolicyEngine, PolicyDecision, Request, RuntimePolicy,
+    PolicyEngine,
+    PolicyRule,
+    PolicyType,
+    Request,
+    ResolutionSuggestion,
+    RuntimePolicy,
+    ValidationIssue,
+    ValidationReport,
 };
 
 #[cfg(test)]

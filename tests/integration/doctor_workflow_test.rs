@@ -108,7 +108,9 @@ async fn test_doctor_workflow_missing_config() {
         .success() // Doctor doesn't fail, just reports
         .stdout(predicate::str::contains("Config file:"))
         .stdout(predicate::str::contains("Not found").or(predicate::str::contains("Warning")))
-        .stdout(predicate::str::contains("Suggestions:").or(predicate::str::contains("x402-dev init")));
+        .stdout(
+            predicate::str::contains("Suggestions:").or(predicate::str::contains("x402-dev init")),
+        );
 }
 
 #[tokio::test]
@@ -319,6 +321,9 @@ simulation_mode: success
 
     cmd.assert()
         .success()
-        .stdout(predicate::str::contains("package.json not found").or(predicate::str::contains("Not detected")))
+        .stdout(
+            predicate::str::contains("package.json not found")
+                .or(predicate::str::contains("Not detected")),
+        )
         .stdout(predicate::str::contains("npm init").or(predicate::str::contains("Suggestions")));
 }

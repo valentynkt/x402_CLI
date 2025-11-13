@@ -55,10 +55,7 @@ pub fn format_summary(result: &SuiteResult, quiet: bool) -> String {
     }
 
     // Summary (FR-2.5: total, passed, failed, duration)
-    output.push_str(&format!(
-        "\n{}\n",
-        "Test Suite Summary".bold().cyan()
-    ));
+    output.push_str(&format!("\n{}\n", "Test Suite Summary".bold().cyan()));
     output.push_str(&format!(
         "  Total:    {}\n",
         result.total.to_string().bold()
@@ -92,7 +89,11 @@ pub fn format_summary(result: &SuiteResult, quiet: bool) -> String {
 
 /// Format individual test result
 fn format_test_result(test: &TestResult, output: &mut String) {
-    let status_icon = if test.passed { "✓".green() } else { "✗".red() };
+    let status_icon = if test.passed {
+        "✓".green()
+    } else {
+        "✗".red()
+    };
     let status_text = if test.passed {
         "PASS".green().bold()
     } else {
@@ -159,11 +160,8 @@ pub fn generate_junit_xml(result: &SuiteResult) -> String {
                 xml.push('\n');
             } else {
                 // Collect failed assertions
-                let failed_assertions: Vec<_> = test
-                    .assertions
-                    .iter()
-                    .filter(|a| !a.passed)
-                    .collect();
+                let failed_assertions: Vec<_> =
+                    test.assertions.iter().filter(|a| !a.passed).collect();
 
                 for assertion in failed_assertions {
                     xml.push_str(&format!(

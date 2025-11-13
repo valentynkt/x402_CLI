@@ -3,11 +3,11 @@
 #[path = "../fixtures/mod.rs"]
 mod fixtures;
 
-use fixtures::*;
 use fixtures::invoices::{
-    invoice_with_zero_amount, invoice_with_excessive_amount,
-    invoice_with_invalid_network, expired_invoice, almost_expired_invoice,
+    almost_expired_invoice, expired_invoice, invoice_with_excessive_amount,
+    invoice_with_invalid_network, invoice_with_zero_amount,
 };
+use fixtures::*;
 
 #[test]
 fn test_valid_policy_yaml_fixture() {
@@ -220,20 +220,33 @@ fn test_invalid_currency_fixtures() {
 
     for variant in variants {
         let invoice = invoice_with_invalid_currency(variant);
-        assert_ne!(invoice.currency, "USDC", "Variant {} should have invalid currency", variant);
+        assert_ne!(
+            invoice.currency, "USDC",
+            "Variant {} should have invalid currency",
+            variant
+        );
     }
 }
 
 #[test]
 fn test_malformed_memo_fixtures() {
-    let variants = vec!["empty", "not_uuid", "wrong_format", "no_hyphens", "invalid_chars"];
+    let variants = vec![
+        "empty",
+        "not_uuid",
+        "wrong_format",
+        "no_hyphens",
+        "invalid_chars",
+    ];
 
     for variant in variants {
         let invoice = invoice_with_malformed_memo(variant);
         // Valid UUID format: 36 characters with 4 hyphens
         let is_valid_uuid = invoice.memo.len() == 36 && invoice.memo.matches('-').count() == 4;
-        assert!(!is_valid_uuid || variant == "invalid_chars",
-                "Variant {} should have invalid memo", variant);
+        assert!(
+            !is_valid_uuid || variant == "invalid_chars",
+            "Variant {} should have invalid memo",
+            variant
+        );
     }
 }
 
@@ -245,9 +258,10 @@ fn test_invalid_network_fixtures() {
         let invoice = invoice_with_invalid_network(variant);
         assert!(
             invoice.network != "devnet"
-            && invoice.network != "testnet"
-            && invoice.network != "mainnet-beta",
-            "Variant {} should have invalid network", variant
+                && invoice.network != "testnet"
+                && invoice.network != "mainnet-beta",
+            "Variant {} should have invalid network",
+            variant
         );
     }
 }
@@ -264,7 +278,13 @@ fn test_expired_invoice_fixtures() {
 
 #[test]
 fn test_missing_invoice_fields_fixtures() {
-    let variants = vec!["no_recipient", "no_amount", "no_currency", "no_memo", "no_network"];
+    let variants = vec![
+        "no_recipient",
+        "no_amount",
+        "no_currency",
+        "no_memo",
+        "no_network",
+    ];
 
     for variant in variants {
         let json = invoice_missing_required_fields(variant);
@@ -330,15 +350,26 @@ fn test_valid_test_addresses_constant() {
     assert!(VALID_TEST_ADDRESSES.len() >= 6);
 
     for addr in VALID_TEST_ADDRESSES {
-        assert!(addr.len() >= 32 && addr.len() <= 44,
-                "Address {} has invalid length", addr);
+        assert!(
+            addr.len() >= 32 && addr.len() <= 44,
+            "Address {} has invalid length",
+            addr
+        );
 
         // Check Base58 characters only (no 0, O, I, l)
         for c in addr.chars() {
-            assert!(c.is_ascii_alphanumeric(),
-                    "Address {} contains non-alphanumeric char: {}", addr, c);
-            assert!(c != '0' && c != 'O' && c != 'I' && c != 'l',
-                    "Address {} contains invalid Base58 char: {}", addr, c);
+            assert!(
+                c.is_ascii_alphanumeric(),
+                "Address {} contains non-alphanumeric char: {}",
+                addr,
+                c
+            );
+            assert!(
+                c != '0' && c != 'O' && c != 'I' && c != 'l',
+                "Address {} contains invalid Base58 char: {}",
+                addr,
+                c
+            );
         }
     }
 }

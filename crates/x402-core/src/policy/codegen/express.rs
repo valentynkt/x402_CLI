@@ -5,7 +5,10 @@ use crate::policy::types::PolicyRule;
 use chrono::Utc;
 
 /// Generate Express.js middleware from policy configuration
-pub fn generate_express_middleware(policy_file_content: &PolicyFile, policy_file_name: &str) -> String {
+pub fn generate_express_middleware(
+    policy_file_content: &PolicyFile,
+    policy_file_name: &str,
+) -> String {
     let mut code = String::new();
 
     // Header with generation metadata
@@ -38,13 +41,21 @@ fn generate_helper_functions(config: &PolicyFile) -> String {
     let mut code = String::new();
 
     // Rate limit checker
-    if config.policies.iter().any(|p| matches!(p, PolicyRule::RateLimit { .. })) {
+    if config
+        .policies
+        .iter()
+        .any(|p| matches!(p, PolicyRule::RateLimit { .. }))
+    {
         code.push_str(&generate_rate_limit_helper());
         code.push('\n');
     }
 
     // Spending cap checker
-    if config.policies.iter().any(|p| matches!(p, PolicyRule::SpendingCap { .. })) {
+    if config
+        .policies
+        .iter()
+        .any(|p| matches!(p, PolicyRule::SpendingCap { .. }))
+    {
         code.push_str(&generate_spending_cap_helper());
         code.push('\n');
     }
@@ -98,7 +109,8 @@ function rateLimitExceeded(agentId, maxRequests, windowSeconds) {
 
   return false;
 }
-"#.to_string()
+"#
+    .to_string()
 }
 
 fn generate_spending_cap_helper() -> String {
@@ -166,7 +178,8 @@ function getNextResetTime(period) {
       return now.getTime() + (24 * 60 * 60 * 1000); // Default to 24h
   }
 }
-"#.to_string()
+"#
+    .to_string()
 }
 
 fn generate_invoice_helper(config: &PolicyFile) -> String {
@@ -191,7 +204,10 @@ function generateInvoice(agentId, resource) {{
 "#,
         config.pricing.amount,
         config.pricing.currency,
-        config.pricing.memo_prefix.as_ref()
+        config
+            .pricing
+            .memo_prefix
+            .as_ref()
             .map(|s| format!("'{}'", s))
             .unwrap_or_else(|| "null".to_string())
     )
@@ -241,8 +257,7 @@ function logPaymentAttempt(agentId, resource, action, result) {{
   }}
 }}
 "#,
-        format,
-        destination
+        format, destination
     )
 }
 
@@ -269,8 +284,11 @@ const x402Middleware = (req, res, next) => {
         match policy {
             PolicyRule::Allowlist { field: _, values } => {
                 code.push_str("  // Allowlist policy check\n");
-                code.push_str(&format!("  const allowedAgents = {};\n",
-                    serde_json::to_string(values).expect("Vec<String> should always serialize to JSON")));
+                code.push_str(&format!(
+                    "  const allowedAgents = {};\n",
+                    serde_json::to_string(values)
+                        .expect("Vec<String> should always serialize to JSON")
+                ));
                 code.push_str(
                     r#"  if (!allowedAgents.includes(agentId)) {
     if (logPaymentAttempt) {
@@ -284,8 +302,11 @@ const x402Middleware = (req, res, next) => {
             }
             PolicyRule::Denylist { field: _, values } => {
                 code.push_str("  // Denylist policy check\n");
-                code.push_str(&format!("  const deniedAgents = {};\n",
-                    serde_json::to_string(values).expect("Vec<String> should always serialize to JSON")));
+                code.push_str(&format!(
+                    "  const deniedAgents = {};\n",
+                    serde_json::to_string(values)
+                        .expect("Vec<String> should always serialize to JSON")
+                ));
                 code.push_str(
                     r#"  if (deniedAgents.includes(agentId)) {
     if (logPaymentAttempt) {
@@ -297,7 +318,10 @@ const x402Middleware = (req, res, next) => {
 "#,
                 );
             }
-            PolicyRule::RateLimit { max_requests, window_seconds } => {
+            PolicyRule::RateLimit {
+                max_requests,
+                window_seconds,
+            } => {
                 code.push_str("  // Rate limit policy check\n");
                 code.push_str(&format!(
                     r#"  if (rateLimitExceeded(agentId, {}, {})) {{
@@ -311,7 +335,11 @@ const x402Middleware = (req, res, next) => {
                     max_requests, window_seconds, window_seconds
                 ));
             }
-            PolicyRule::SpendingCap { max_amount, currency, window_seconds } => {
+            PolicyRule::SpendingCap {
+                max_amount,
+                currency,
+                window_seconds,
+            } => {
                 code.push_str("  // Spending cap policy check\n");
                 code.push_str(&format!(
                     r#"  const requestAmount = {}; // Amount for this request
@@ -378,7 +406,7 @@ module.exports = x402Middleware;
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::policy::rules::{PolicyFile, AuditConfig, PricingConfig};
+    use crate::policy::rules::{AuditConfig, PolicyFile, PricingConfig};
 
     #[test]
     fn test_generate_header() {

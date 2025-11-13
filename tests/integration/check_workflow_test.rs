@@ -36,9 +36,7 @@ async fn test_complete_check_workflow_success() {
 
     // Run check command
     let mut cmd = Command::cargo_bin("x402-dev").unwrap();
-    cmd.arg("check")
-        .arg(&url)
-        .timeout(Duration::from_secs(10));
+    cmd.arg("check").arg(&url).timeout(Duration::from_secs(10));
 
     cmd.assert()
         .success()
@@ -57,13 +55,11 @@ async fn test_check_workflow_with_retries() {
 
     // Run check command (should fail with connection error)
     let mut cmd = Command::cargo_bin("x402-dev").unwrap();
-    cmd.arg("check")
-        .arg(url)
-        .timeout(Duration::from_secs(15));
+    cmd.arg("check").arg(url).timeout(Duration::from_secs(15));
 
-    cmd.assert()
-        .failure()
-        .stderr(predicate::str::contains("Failed to connect").or(predicate::str::contains("error")));
+    cmd.assert().failure().stderr(
+        predicate::str::contains("Failed to connect").or(predicate::str::contains("error")),
+    );
 }
 
 #[tokio::test]
@@ -163,13 +159,17 @@ async fn test_check_workflow_multiple_urls() {
     // Check first endpoint
     let url1 = format!("{}/api/endpoint1", &mock_server.uri());
     let mut cmd1 = Command::cargo_bin("x402-dev").unwrap();
-    cmd1.arg("check").arg(&url1).timeout(Duration::from_secs(10));
+    cmd1.arg("check")
+        .arg(&url1)
+        .timeout(Duration::from_secs(10));
     cmd1.assert().success();
 
     // Check second endpoint
     let url2 = format!("{}/api/endpoint2", &mock_server.uri());
     let mut cmd2 = Command::cargo_bin("x402-dev").unwrap();
-    cmd2.arg("check").arg(&url2).timeout(Duration::from_secs(10));
+    cmd2.arg("check")
+        .arg(&url2)
+        .timeout(Duration::from_secs(10));
     cmd2.assert().success();
 }
 
@@ -192,13 +192,13 @@ async fn test_check_workflow_timeout_handling() {
     let url = "http://192.0.2.1:80/"; // TEST-NET-1, guaranteed to not respond
 
     let mut cmd = Command::cargo_bin("x402-dev").unwrap();
-    cmd.arg("check")
-        .arg(url)
-        .timeout(Duration::from_secs(15)); // Check has 10s timeout + buffer
+    cmd.arg("check").arg(url).timeout(Duration::from_secs(15)); // Check has 10s timeout + buffer
 
-    cmd.assert()
-        .failure()
-        .stderr(predicate::str::contains("timeout").or(predicate::str::contains("Failed to connect")).or(predicate::str::contains("")));
+    cmd.assert().failure().stderr(
+        predicate::str::contains("timeout")
+            .or(predicate::str::contains("Failed to connect"))
+            .or(predicate::str::contains("")),
+    );
 }
 
 #[tokio::test]
@@ -217,9 +217,7 @@ async fn test_check_workflow_non_402_response() {
 
     // Check should fail because status is not 402
     let mut cmd = Command::cargo_bin("x402-dev").unwrap();
-    cmd.arg("check")
-        .arg(&url)
-        .timeout(Duration::from_secs(10));
+    cmd.arg("check").arg(&url).timeout(Duration::from_secs(10));
 
     cmd.assert()
         .failure()
@@ -234,7 +232,7 @@ async fn test_check_workflow_missing_www_authenticate_header() {
     Mock::given(method("GET"))
         .respond_with(
             ResponseTemplate::new(402)
-                .set_body_json(serde_json::json!({"error": "Payment required"}))
+                .set_body_json(serde_json::json!({"error": "Payment required"})),
         )
         .mount(&mock_server)
         .await;
@@ -242,9 +240,7 @@ async fn test_check_workflow_missing_www_authenticate_header() {
     let url = mock_server.uri();
 
     let mut cmd = Command::cargo_bin("x402-dev").unwrap();
-    cmd.arg("check")
-        .arg(&url)
-        .timeout(Duration::from_secs(10));
+    cmd.arg("check").arg(&url).timeout(Duration::from_secs(10));
 
     cmd.assert()
         .failure()
@@ -258,8 +254,7 @@ async fn test_check_workflow_invalid_header_format() {
     // Mock 402 with malformed WWW-Authenticate header
     Mock::given(method("GET"))
         .respond_with(
-            ResponseTemplate::new(402)
-                .insert_header("WWW-Authenticate", "invalid-format-here")
+            ResponseTemplate::new(402).insert_header("WWW-Authenticate", "invalid-format-here"),
         )
         .mount(&mock_server)
         .await;
@@ -267,13 +262,12 @@ async fn test_check_workflow_invalid_header_format() {
     let url = mock_server.uri();
 
     let mut cmd = Command::cargo_bin("x402-dev").unwrap();
-    cmd.arg("check")
-        .arg(&url)
-        .timeout(Duration::from_secs(10));
+    cmd.arg("check").arg(&url).timeout(Duration::from_secs(10));
 
-    cmd.assert()
-        .failure()
-        .stdout(predicate::str::contains("Invalid protocol identifier").or(predicate::str::contains("Failed")));
+    cmd.assert().failure().stdout(
+        predicate::str::contains("Invalid protocol identifier")
+            .or(predicate::str::contains("Failed")),
+    );
 }
 
 #[tokio::test]
@@ -294,9 +288,7 @@ async fn test_check_workflow_custom_port() {
     let url = mock_server.uri();
 
     let mut cmd = Command::cargo_bin("x402-dev").unwrap();
-    cmd.arg("check")
-        .arg(&url)
-        .timeout(Duration::from_secs(10));
+    cmd.arg("check").arg(&url).timeout(Duration::from_secs(10));
 
     cmd.assert().success();
 }

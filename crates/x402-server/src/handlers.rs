@@ -48,10 +48,7 @@ fn get_simulation_mode(
 // ============================================================================
 
 /// Verify payment with success simulation
-async fn verify_payment_success(
-    payment_proof: String,
-    resource_path: String,
-) -> HttpResponse {
+async fn verify_payment_success(payment_proof: String, resource_path: String) -> HttpResponse {
     println!(
         "✅ Payment verification SUCCESS for proof: {} (resource: {})",
         payment_proof, resource_path

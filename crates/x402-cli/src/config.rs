@@ -22,6 +22,9 @@ pub enum LogLevel {
 
 impl LogLevel {
     /// Returns true if this level is at least as verbose as `other`
+    ///
+    /// Library API for future log filtering feature
+    #[allow(dead_code)]
     pub fn is_at_least(&self, other: LogLevel) -> bool {
         use LogLevel::*;
         let self_level = match self {
@@ -64,11 +67,13 @@ impl FromStr for LogLevel {
             "info" => Ok(LogLevel::Info),
             "debug" => Ok(LogLevel::Debug),
             "trace" => Ok(LogLevel::Trace),
-            _ => Err(format!("Invalid log level: '{}'. Valid values: error, warn, info, debug, trace", s)),
+            _ => Err(format!(
+                "Invalid log level: '{}'. Valid values: error, warn, info, debug, trace",
+                s
+            )),
         }
     }
 }
-
 
 /// Simulation mode for payment verification (Story 2.3)
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
@@ -99,11 +104,13 @@ impl FromStr for SimulationMode {
             "success" => Ok(SimulationMode::Success),
             "fail" | "failure" => Ok(SimulationMode::Failure),
             "timeout" => Ok(SimulationMode::Timeout),
-            _ => Err(format!("Invalid simulation mode: '{}'. Valid values: success, failure, timeout", s)),
+            _ => Err(format!(
+                "Invalid simulation mode: '{}'. Valid values: success, failure, timeout",
+                s
+            )),
         }
     }
 }
-
 
 /// Configuration schema for x402-dev
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -218,12 +225,18 @@ impl PricingConfig {
 }
 
 /// Pricing matcher for route-based pricing
+///
+/// Library API for future route-based pricing feature
+#[allow(dead_code)]
 pub struct PricingMatcher {
     config: PricingConfig,
 }
 
 impl PricingMatcher {
     /// Create a new pricing matcher
+    ///
+    /// Library API for future route-based pricing feature
+    #[allow(dead_code)]
     pub fn new(config: PricingConfig) -> Self {
         PricingMatcher { config }
     }
@@ -234,6 +247,9 @@ impl PricingMatcher {
     /// 1. Exact match (e.g., "/api/data" matches "/api/data")
     /// 2. Prefix match with wildcard (e.g., "/api/*" matches "/api/users")
     /// 3. Default pricing
+    ///
+    /// Library API for future route-based pricing feature
+    #[allow(dead_code)]
     pub fn get_price_for_path(&self, path: &str) -> f64 {
         // Priority 1: Exact match
         if let Some(&amount) = self.config.per_resource.get(path) {
@@ -752,14 +768,32 @@ mod tests {
 
     #[test]
     fn test_simulation_mode_from_str() {
-        assert_eq!("success".parse::<SimulationMode>().unwrap(), SimulationMode::Success);
-        assert_eq!("failure".parse::<SimulationMode>().unwrap(), SimulationMode::Failure);
-        assert_eq!("fail".parse::<SimulationMode>().unwrap(), SimulationMode::Failure); // Alias
-        assert_eq!("timeout".parse::<SimulationMode>().unwrap(), SimulationMode::Timeout);
+        assert_eq!(
+            "success".parse::<SimulationMode>().unwrap(),
+            SimulationMode::Success
+        );
+        assert_eq!(
+            "failure".parse::<SimulationMode>().unwrap(),
+            SimulationMode::Failure
+        );
+        assert_eq!(
+            "fail".parse::<SimulationMode>().unwrap(),
+            SimulationMode::Failure
+        ); // Alias
+        assert_eq!(
+            "timeout".parse::<SimulationMode>().unwrap(),
+            SimulationMode::Timeout
+        );
 
         // Case insensitive
-        assert_eq!("SUCCESS".parse::<SimulationMode>().unwrap(), SimulationMode::Success);
-        assert_eq!("Failure".parse::<SimulationMode>().unwrap(), SimulationMode::Failure);
+        assert_eq!(
+            "SUCCESS".parse::<SimulationMode>().unwrap(),
+            SimulationMode::Success
+        );
+        assert_eq!(
+            "Failure".parse::<SimulationMode>().unwrap(),
+            SimulationMode::Failure
+        );
 
         // Invalid values
         assert!("invalid".parse::<SimulationMode>().is_err());

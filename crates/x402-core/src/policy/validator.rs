@@ -151,7 +151,8 @@ pub fn validate_policies(policy_config: &PolicyConfig) -> ValidationReport {
                 Some(e),
                 vec![ResolutionSuggestion {
                     description: "Fix policy configuration".to_string(),
-                    action: "Ensure all required fields are properly set with valid values".to_string(),
+                    action: "Ensure all required fields are properly set with valid values"
+                        .to_string(),
                 }],
                 vec![idx],
             ));
@@ -279,7 +280,10 @@ fn detect_rate_limit_conflicts(policies: &[PolicyRule], report: &mut ValidationR
                 PolicyRule::RateLimit {
                     max_requests,
                     window_seconds,
-                } => format!("Policy #{}: {} requests / {} seconds", idx, max_requests, window_seconds),
+                } => format!(
+                    "Policy #{}: {} requests / {} seconds",
+                    idx, max_requests, window_seconds
+                ),
                 _ => unreachable!(),
             })
             .collect();
@@ -339,7 +343,10 @@ fn detect_spending_cap_conflicts(policies: &[PolicyRule], report: &mut Validatio
                     max_amount,
                     currency,
                     window_seconds,
-                } => format!("Policy #{}: {} {} / {} seconds", idx, max_amount, currency, window_seconds),
+                } => format!(
+                    "Policy #{}: {} {} / {} seconds",
+                    idx, max_amount, currency, window_seconds
+                ),
                 _ => unreachable!(),
             })
             .collect();
@@ -364,7 +371,9 @@ fn detect_spending_cap_conflicts(policies: &[PolicyRule], report: &mut Validatio
                     } => max_amount / *window_seconds as f64,
                     _ => unreachable!(),
                 };
-                a_rate.partial_cmp(&b_rate).unwrap_or(std::cmp::Ordering::Equal)
+                a_rate
+                    .partial_cmp(&b_rate)
+                    .unwrap_or(std::cmp::Ordering::Equal)
             })
             .map(|(idx, _)| idx);
 

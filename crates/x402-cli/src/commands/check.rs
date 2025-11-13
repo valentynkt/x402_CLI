@@ -15,7 +15,9 @@ fn parse_www_authenticate(header: &str) -> Result<HashMap<String, String>> {
 
     // First part should be protocol identifier
     if parts.is_empty() || parts[0] != "x402-solana" {
-        return Err(anyhow!("Invalid protocol identifier, expected 'x402-solana'"));
+        return Err(anyhow!(
+            "Invalid protocol identifier, expected 'x402-solana'"
+        ));
     }
 
     // Parse key=value pairs
@@ -37,69 +39,51 @@ fn validate_invoice(fields: &HashMap<String, String>) -> Vec<(String, bool, Stri
     for field in required_fields {
         let exists = fields.contains_key(field);
         let status = if exists { "present" } else { "missing" };
-        results.push((
-            format!("Field '{}'", field),
-            exists,
-            status.to_string(),
-        ));
+        results.push((format!("Field '{}'", field), exists, status.to_string()));
     }
 
     // Validate recipient (Base58, 32-44 chars)
     if let Some(recipient) = fields.get("recipient") {
         let valid_length = recipient.len() >= 32 && recipient.len() <= 44;
-        let valid_base58 = recipient.chars().all(|c| {
-            c.is_ascii_alphanumeric() && c != '0' && c != 'O' && c != 'I' && c != 'l'
-        });
+        let valid_base58 = recipient
+            .chars()
+            .all(|c| c.is_ascii_alphanumeric() && c != '0' && c != 'O' && c != 'I' && c != 'l');
         let valid = valid_length && valid_base58;
         let status = if valid {
             format!("{} (valid Base58)", &recipient[..8])
         } else {
             "invalid format".to_string()
         };
-        results.push((
-            "Recipient address".to_string(),
-            valid,
-            status,
-        ));
+        results.push(("Recipient address".to_string(), valid, status));
     }
 
     // Validate amount (parseable as f64, positive)
     if let Some(amount_str) = fields.get("amount") {
-        let valid = amount_str.parse::<f64>()
-            .map(|a| a > 0.0)
-            .unwrap_or(false);
+        let valid = amount_str.parse::<f64>().map(|a| a > 0.0).unwrap_or(false);
         let status = if valid {
             format!("{} USDC", amount_str)
         } else {
             "invalid amount".to_string()
         };
-        results.push((
-            "Amount".to_string(),
-            valid,
-            status,
-        ));
+        results.push(("Amount".to_string(), valid, status));
     }
 
     // Validate currency (should be USDC)
     if let Some(currency) = fields.get("currency") {
         let valid = currency == "USDC";
         let status = if valid { "USDC" } else { "not USDC" };
-        results.push((
-            "Currency".to_string(),
-            valid,
-            status.to_string(),
-        ));
+        results.push(("Currency".to_string(), valid, status.to_string()));
     }
 
     // Validate memo (should start with req-)
     if let Some(memo) = fields.get("memo") {
         let valid = memo.starts_with("req-") && memo.len() > 4;
-        let status = if valid { memo.clone() } else { "invalid format".to_string() };
-        results.push((
-            "Memo".to_string(),
-            valid,
-            status,
-        ));
+        let status = if valid {
+            memo.clone()
+        } else {
+            "invalid format".to_string()
+        };
+        results.push(("Memo".to_string(), valid, status));
     }
 
     // Validate network (devnet, testnet, or mainnet-beta)
@@ -109,13 +93,12 @@ fn validate_invoice(fields: &HashMap<String, String>) -> Vec<(String, bool, Stri
         let status = if valid {
             network.clone()
         } else {
-            format!("invalid (expected devnet/testnet/mainnet-beta, got {})", network)
+            format!(
+                "invalid (expected devnet/testnet/mainnet-beta, got {})",
+                network
+            )
         };
-        results.push((
-            "Network".to_string(),
-            valid,
-            status,
-        ));
+        results.push(("Network".to_string(), valid, status));
     }
 
     results
@@ -153,7 +136,11 @@ pub async fn run(args: &CheckArgs) -> Result<()> {
     let status_check = status.as_u16() == 402;
     if status_check {
         checks_passed += 1;
-        println!("  {} HTTP 402 status code: {}", "✅".green(), "PASS".green());
+        println!(
+            "  {} HTTP 402 status code: {}",
+            "✅".green(),
+            "PASS".green()
+        );
     } else {
         println!(
             "  {} HTTP 402 status code: {} (got {})",
@@ -169,7 +156,11 @@ pub async fn run(args: &CheckArgs) -> Result<()> {
     let header_check = www_auth.is_some();
     if header_check {
         checks_passed += 1;
-        println!("  {} WWW-Authenticate header: {}", "✅".green(), "PASS".green());
+        println!(
+            "  {} WWW-Authenticate header: {}",
+            "✅".green(),
+            "PASS".green()
+        );
     } else {
         println!(
             "  {} WWW-Authenticate header: {}",

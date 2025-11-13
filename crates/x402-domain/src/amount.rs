@@ -1,6 +1,6 @@
 use crate::error::{DomainError, DomainResult};
-use rust_decimal::Decimal;
 use rust_decimal::prelude::ToPrimitive;
+use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use std::fmt::{self, Display};
 use std::ops::{Add, Sub};
@@ -66,18 +66,23 @@ impl Amount {
 
     /// Checked addition to prevent overflow
     pub fn checked_add(&self, other: &Amount) -> DomainResult<Amount> {
-        self.0.checked_add(other.0)
+        self.0
+            .checked_add(other.0)
             .map(Amount)
             .ok_or_else(|| DomainError::ArithmeticOverflow("addition overflow".into()))
     }
 
     /// Checked subtraction to prevent underflow
     pub fn checked_sub(&self, other: &Amount) -> DomainResult<Amount> {
-        let result = self.0.checked_sub(other.0)
+        let result = self
+            .0
+            .checked_sub(other.0)
             .ok_or_else(|| DomainError::ArithmeticOverflow("subtraction overflow".into()))?;
 
         if result.is_sign_negative() {
-            return Err(DomainError::InvalidAmount("result would be negative".into()));
+            return Err(DomainError::InvalidAmount(
+                "result would be negative".into(),
+            ));
         }
 
         Ok(Amount(result))
@@ -86,7 +91,8 @@ impl Amount {
     /// Checked multiplication
     pub fn checked_mul(&self, multiplier: impl Into<Decimal>) -> DomainResult<Amount> {
         let mult = multiplier.into();
-        self.0.checked_mul(mult)
+        self.0
+            .checked_mul(mult)
             .map(Amount)
             .ok_or_else(|| DomainError::ArithmeticOverflow("multiplication overflow".into()))
     }
@@ -98,7 +104,8 @@ impl Amount {
             return Err(DomainError::ArithmeticOverflow("division by zero".into()));
         }
 
-        self.0.checked_div(div)
+        self.0
+            .checked_div(div)
             .map(Amount)
             .ok_or_else(|| DomainError::ArithmeticOverflow("division overflow".into()))
     }
@@ -160,7 +167,10 @@ impl FromStr for Currency {
         match s.to_uppercase().as_str() {
             "USDC" => Ok(Currency::USDC),
             "SOL" => Ok(Currency::SOL),
-            _ => Err(DomainError::InvalidAmount(format!("unknown currency: {}", s))),
+            _ => Err(DomainError::InvalidAmount(format!(
+                "unknown currency: {}",
+                s
+            ))),
         }
     }
 }

@@ -80,11 +80,13 @@ pub async fn run(_args: &InitArgs) -> Result<()> {
     .to_string();
 
     // Log level selection
-    let log_level_options = [LogLevel::Error,
+    let log_level_options = [
+        LogLevel::Error,
         LogLevel::Warn,
         LogLevel::Info,
         LogLevel::Debug,
-        LogLevel::Trace];
+        LogLevel::Trace,
+    ];
     let log_level_display = vec!["error", "warn", "info", "debug", "trace"];
     let log_level_idx = Select::new()
         .with_prompt("Log level")
@@ -101,11 +103,13 @@ pub async fn run(_args: &InitArgs) -> Result<()> {
         log_level,
         pricing: PricingConfig::default(), // Story 2.2: Use default pricing
         simulation_mode: SimulationMode::default(), // Story 2.3: Default to success mode
-        timeout_delay_ms: 5000, // Story 2.3: Default 5 second timeout
+        timeout_delay_ms: 5000,            // Story 2.3: Default 5 second timeout
     };
 
     // Validate configuration
-    config.validate().context("Configuration validation failed")?;
+    config
+        .validate()
+        .context("Configuration validation failed")?;
 
     // Convert to ProjectConfig for serialization
     let project_config: ProjectConfig = config.into();

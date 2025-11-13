@@ -22,8 +22,7 @@ pub const SHUTDOWN_POLL_INTERVAL_MS: u64 = 100;
 
 /// Get path to PID file using platform-specific home directory
 pub fn get_pid_file_path() -> Result<PathBuf> {
-    let base_dirs = BaseDirs::new()
-        .ok_or_else(|| anyhow!("Cannot determine home directory"))?;
+    let base_dirs = BaseDirs::new().ok_or_else(|| anyhow!("Cannot determine home directory"))?;
 
     Ok(base_dirs
         .home_dir()
@@ -37,19 +36,16 @@ pub fn write_pid_file(pid: u32) -> Result<()> {
 
     // Create parent directory if it doesn't exist
     if let Some(parent) = pid_path.parent() {
-        fs::create_dir_all(parent)
-            .context("Failed to create .x402dev directory")?;
+        fs::create_dir_all(parent).context("Failed to create .x402dev directory")?;
     }
 
     // Open file and acquire exclusive lock (prevents TOCTOU race condition)
-    let file = File::create(&pid_path)
-        .context("Failed to create PID file")?;
+    let file = File::create(&pid_path).context("Failed to create PID file")?;
 
     file.try_lock_exclusive()
         .context("Server already running (cannot acquire PID file lock)")?;
 
-    fs::write(&pid_path, pid.to_string())
-        .context("Failed to write PID file")?;
+    fs::write(&pid_path, pid.to_string()).context("Failed to write PID file")?;
 
     // Lock is automatically released when file handle is dropped
     Ok(())
@@ -58,19 +54,14 @@ pub fn write_pid_file(pid: u32) -> Result<()> {
 /// Read PID file
 pub fn read_pid_file() -> Option<u32> {
     let pid_path = get_pid_file_path().ok()?;
-    fs::read_to_string(&pid_path)
-        .ok()?
-        .trim()
-        .parse()
-        .ok()
+    fs::read_to_string(&pid_path).ok()?.trim().parse().ok()
 }
 
 /// Delete PID file
 pub fn delete_pid_file() -> Result<()> {
     let pid_path = get_pid_file_path()?;
     if pid_path.exists() {
-        fs::remove_file(&pid_path)
-            .context("Failed to remove PID file")?;
+        fs::remove_file(&pid_path).context("Failed to remove PID file")?;
     }
     Ok(())
 }
@@ -99,8 +90,7 @@ pub fn stop_server_process(pid: u32) -> Result<()> {
     use nix::unistd::Pid as NixPid;
 
     // Send SIGTERM for graceful shutdown
-    kill(NixPid::from_raw(pid as i32), Signal::SIGTERM)
-        .context("Failed to send SIGTERM")?;
+    kill(NixPid::from_raw(pid as i32), Signal::SIGTERM).context("Failed to send SIGTERM")?;
 
     // Wait up to SHUTDOWN_TIMEOUT_SECS for graceful shutdown
     let max_attempts = (SHUTDOWN_TIMEOUT_SECS * 1000) / SHUTDOWN_POLL_INTERVAL_MS;

@@ -22,7 +22,6 @@ pub enum SimulationMode {
     Timeout,
 }
 
-
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Config {
     pub port: u16,
@@ -112,11 +111,7 @@ impl Invoice {
     pub fn format_www_authenticate(&self) -> String {
         format!(
             "x402-solana recipient={} amount={} currency={} memo={} network={}",
-            self.recipient,
-            self.amount,
-            self.currency,
-            self.memo,
-            self.network
+            self.recipient, self.amount, self.currency, self.memo, self.network
         )
     }
 }

@@ -181,7 +181,8 @@ impl FromStr for Port {
     type Err = DomainError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let port = s.parse::<u16>()
+        let port = s
+            .parse::<u16>()
             .map_err(|_| DomainError::InvalidPort("must be a valid u16".into()))?;
         Self::new(port)
     }
@@ -229,7 +230,10 @@ mod tests {
     fn test_solana_address() {
         // Valid address
         let addr = SolanaAddress::new("7EqQdEULxWcraVx3mXKFjc84LhCkMGZCkRuDpvcMwJeK").unwrap();
-        assert_eq!(addr.as_str(), "7EqQdEULxWcraVx3mXKFjc84LhCkMGZCkRuDpvcMwJeK");
+        assert_eq!(
+            addr.as_str(),
+            "7EqQdEULxWcraVx3mXKFjc84LhCkMGZCkRuDpvcMwJeK"
+        );
 
         // Invalid: too short
         assert!(SolanaAddress::new("abc").is_err());

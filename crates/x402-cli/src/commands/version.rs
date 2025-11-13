@@ -1,9 +1,9 @@
 use anyhow::{Context, Result};
-use serde::{Deserialize, Serialize};
 use semver::Version;
+use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
-use std::time::{SystemTime, UNIX_EPOCH, Duration};
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 const CRATES_IO_API: &str = "https://crates.io/api/v1/crates/x402-dev";
 const CHECK_INTERVAL_SECS: u64 = 604800; // 7 days in seconds
@@ -129,8 +129,7 @@ async fn fetch_latest_version() -> Result<String> {
 
 fn get_cache_path() -> Result<PathBuf> {
     // Use home directory + .x402dev for cross-platform compatibility
-    let home_dir = dirs::home_dir()
-        .context("Failed to determine home directory")?;
+    let home_dir = dirs::home_dir().context("Failed to determine home directory")?;
 
     Ok(home_dir.join(".x402dev").join("update-check.json"))
 }

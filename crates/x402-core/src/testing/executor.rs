@@ -41,9 +41,7 @@ impl SuiteResult {
 /// Execute a complete test suite
 pub async fn execute_test_suite(suite: &TestSuite) -> Result<SuiteResult> {
     let start = Instant::now();
-    let client = Client::builder()
-        .timeout(Duration::from_secs(30))
-        .build()?;
+    let client = Client::builder().timeout(Duration::from_secs(30)).build()?;
 
     let mut test_results = Vec::new();
     let mut passed_count = 0;
